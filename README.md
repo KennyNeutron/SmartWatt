@@ -8,7 +8,7 @@ SmartWatt is a distributed smart energy limiter system designed to help househol
 
 ## System Architecture
 
-![Block Diagram](SmartWatt_BlockDiagram.jpg)
+![Block Diagram](Docs/SmartWatt_BlockDiagram.jpg)
 
 1. **Solar & Battery Subsystem**
 
