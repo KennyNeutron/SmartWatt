@@ -1,9 +1,5 @@
 # SmartWatt
 
-SmartWatt – A smart energy limiter that monitors real-time electricity usage and automatically switches between grid, solar, and battery backup when a daily kWh limit is reached, all managed through a secure web dashboard.
-
-# SmartWatt
-
 SmartWatt is a distributed smart energy limiter system designed to help households, boarding houses, and small businesses save on electricity costs. It uses a network of ESP32 microcontrollers and precision sensors to monitor and control multiple outlets, and automatically switches the main power source between grid, solar, or battery backup when a daily energy limit is reached.
 
 ## System Architecture
