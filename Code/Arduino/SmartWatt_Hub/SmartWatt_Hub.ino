@@ -1,7 +1,7 @@
 /*
   SmartWatt Receiver v1.0.0
   Environment:           ESP32 Dev Module
-  Author:                
+  Author:                Kenny Neutron
   Date Started:          2025-08-11
   Pin Usage:
     NRF24L01:
@@ -31,7 +31,7 @@
   Features:
     - Wireless data reception via NRF24L01
     - SmartWatt Node data parsing
-    - Real-time current monitoring display
+    - Real-time current monitoring display (2 decimal places)
     - Device ID identification
     - Connection status monitoring
 */
@@ -46,8 +46,8 @@ byte address[6] = "SWD25";
 
 // Data structure matching SmartWatt Node
 struct SmartWatt_Data {
-  uint8_t deviceID[6];  // 6 bytes
-  float currentConsumption;
+  uint8_t deviceID = 0x00;
+  uint16_t currentConsumption;  // Received as milliamps (mA) - unsigned
 };
 
 SmartWatt_Data receivedData;
@@ -79,8 +79,8 @@ void setup() {
   NRF.startListening();
 
   Serial.println("Receiver ready. Waiting for SmartWatt Node data...");
-  Serial.println("Format: [Device ID] | Current: XXX A | Status");
-  Serial.println("================================================");
+  Serial.println("Format: [Device ID] | Current: XX.XX A | (Raw mA: XXX) | Status");
+  Serial.println("=============================================================");
 }
 
 void loop() {
@@ -91,24 +91,26 @@ void loop() {
     lastDataReceived = millis();
 
     // Display device ID
-    Serial.print("[");
-    for (int i = 0; i < 6; i++) {
-      if (receivedData.deviceID[i] != 0) {
-        Serial.print((char)receivedData.deviceID[i]);
-      }
-    }
+    Serial.print("[0x");
+    Serial.print(receivedData.deviceID, HEX);
     Serial.print("] | Current: ");
     
-    // Display current consumption (rounded to whole number)
-    Serial.print((int)round(receivedData.currentConsumption));
+    // Convert milliamps back to amps and display with 2 decimal places
+    float currentFloat = receivedData.currentConsumption / 1000.0;  // mA to A
+    Serial.print(currentFloat, 2);
     Serial.print(" A | ");
     
-    // Status indicator
-    if (receivedData.currentConsumption == 0) {
+    // Debug: Show raw milliamp value
+    Serial.print("(Raw mA: ");
+    Serial.print(receivedData.currentConsumption);
+    Serial.print(") | ");
+    
+    // Status indicator (using threshold instead of exact comparison)
+    if (currentFloat < 0.05) {  // Very close to zero
       Serial.println("Status: No Load");
-    } else if (receivedData.currentConsumption < 1) {
+    } else if (currentFloat < 1.0) {
       Serial.println("Status: Low Load");
-    } else if (receivedData.currentConsumption < 5) {
+    } else if (currentFloat < 5.0) {
       Serial.println("Status: Normal Load");
     } else {
       Serial.println("Status: High Load");
@@ -129,18 +131,13 @@ void loop() {
 // Function to display detailed device information (optional)
 void displayDeviceInfo() {
   Serial.println("\n=== SmartWatt Device Information ===");
-  Serial.print("Device ID: ");
-  for (int i = 0; i < 6; i++) {
-    if (receivedData.deviceID[i] != 0) {
-      Serial.print((char)receivedData.deviceID[i]);
-    }
-  }
-  Serial.println();
+  Serial.print("Device ID: 0x");
+  Serial.println(receivedData.deviceID, HEX);
   Serial.print("Current Consumption: ");
-  Serial.print(receivedData.currentConsumption, 1);
+  Serial.print(receivedData.currentConsumption / 1000.0, 2);  // Convert mA back to A
   Serial.println(" A");
   Serial.print("Power Estimate: ");
-  Serial.print(receivedData.currentConsumption * 220, 0);  // Assuming 220V
+  Serial.print((receivedData.currentConsumption / 1000.0) * 220, 2);  // Convert mA to A for power calculation
   Serial.println(" W");
   Serial.println("=====================================\n");
 }

@@ -1,7 +1,7 @@
 /*
   SmartWatt Node v1.0.0
   Environment:           Arduino Nano/Uno
-  Author:               
+  Author:                
   Date Started:          2025-08-11
   Pin Usage:
     Current Sensor (ACS712):
@@ -25,7 +25,7 @@
     - Current measurement with ACS712 sensor
     - Automatic offset calibration
     - Threshold filtering (ignores values < 0.1A)
-    - Whole number current display (0 decimal places)
+    - Current display in mA and A (2 decimal places)
     - Wireless data transmission via NRF24L01
     - Real-time serial monitoring
 */
@@ -39,8 +39,8 @@ RF24 NRF(9, 10);  // CE, CSN
 byte address[6] = "SWD25";
 
 struct SmartWatt_Data {
-  uint8_t deviceID[6];  // 6 bytes
-  float currentConsumption;
+  uint8_t deviceID = 0x00;
+  uint16_t currentConsumption;  // Send as milliamps (mA) - unsigned
 };
 
 SmartWatt_Data smartwattData;
@@ -55,21 +55,12 @@ float offsetVoltage = 2.5;  // Typical midpoint (sensor output with no current)
 void setup() {
   Serial.begin(9600);
 
-  // Initialize device ID
-  const uint8_t tempID[6] = { 'S', 'W', 'D', '0', '1', 0 };
-  memcpy(smartwattData.deviceID, tempID, 6);
-
-  smartwattData.currentConsumption = 0.0;
+  smartwattData.deviceID = 0x01;
+  smartwattData.currentConsumption = 0;
 
   // Debug print
-  Serial.print("Device ID: ");
-  for (int i = 0; i < 6; i++) {
-    Serial.print((char)smartwattData.deviceID[i]);
-  }
-  Serial.println();
-
-  Serial.print("Current Consumption: ");
-  Serial.println(smartwattData.currentConsumption, 0);  // Changed to 0 decimal places
+  Serial.print("Device ID: 0x");
+  Serial.println(smartwattData.deviceID, HEX);
 
   // Take an initial reading to determine offset voltage (zero current)
   long sum = 0;
@@ -98,23 +89,27 @@ void loop() {
   int rawValue = analogRead(sensorPin);
   float voltage = (rawValue * Vref) / 1023.0;
   float current = (voltage - offsetVoltage) / sensitivity;
-  
-  // Apply threshold filter and round to nearest integer
+
+  // Apply threshold filter but keep as float
   float processedCurrent = 0.0;
   if (abs(current) >= minCurrentThreshold) {
-    processedCurrent = round(current);  // Round to nearest whole number
+    processedCurrent = current;  // Keep as float, no rounding
   }
+
+  // Convert to mA (keep sign, don't use abs unless you want only positive values)
+  smartwattData.currentConsumption = (int16_t)(processedCurrent * 1000);
 
   Serial.print(F("Raw ADC: "));
   Serial.print(rawValue);
   Serial.print(F(" | Voltage: "));
   Serial.print(voltage, 3);
   Serial.print(F(" V | Current: "));
-  Serial.print(processedCurrent, 0);  // Display with 0 decimal places
-  Serial.println(F(" A"));
+  Serial.print(smartwattData.currentConsumption);
+  Serial.print(F(" mA ("));
+  Serial.print(smartwattData.currentConsumption / 1000.0, 2);  // Display in A with 2 decimal places
+  Serial.println(F(" A)"));
 
   // Send processed data via NRF
-  smartwattData.currentConsumption = processedCurrent;
   NRF.write(&smartwattData, sizeof(smartwattData));
   Serial.println("Data sent successfully.");
   delay(1000);
