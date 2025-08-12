@@ -48,12 +48,14 @@ byte address[6] = "SWD25";
 U8G2_SH1106_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, /* reset=*/U8X8_PIN_NONE);
 
 // Data structure matching SmartWatt Node
-struct SmartWatt_Data {
-  uint8_t deviceID = 0x00;
-  uint16_t currentConsumption;  // Received as milliamps (mA) - unsigned
+struct __attribute__((packed)) SmartWatt_Data {
+  uint8_t deviceID;
+  uint16_t currentConsumption; // Use unsigned for mA
 };
 
-SmartWatt_Data receivedData;
+
+SmartWatt_Data smartwattData;
+
 unsigned long lastDataReceived = 0;
 const unsigned long dataTimeout = 5000;  // 5 seconds timeout
 
@@ -88,39 +90,23 @@ void setup() {
 }
 
 void loop() {
+
+
   display_Main();
 
   // Check if data is available
   if (NRF.available()) {
     // Read the data
-    NRF.read(&receivedData, sizeof(receivedData));
+    NRF.read(&smartwattData, sizeof(smartwattData));
     lastDataReceived = millis();
 
     // Display device ID
-    Serial.print("[0x");
-    Serial.print(receivedData.deviceID, HEX);
-    Serial.print("] | Current: ");
-
-    // Convert milliamps back to amps and display with 2 decimal places
-    float currentFloat = receivedData.currentConsumption / 1000.0;  // mA to A
-    Serial.print(currentFloat, 2);
-    Serial.print(" A | ");
+    Serial.print("[0x0");
+    Serial.print(smartwattData.deviceID, HEX);
 
     // Debug: Show raw milliamp value
-    Serial.print("(Raw mA: ");
-    Serial.print(receivedData.currentConsumption);
-    Serial.print(") | ");
-
-    // Status indicator (using threshold instead of exact comparison)
-    if (currentFloat < 0.05) {  // Very close to zero
-      Serial.println("Status: No Load");
-    } else if (currentFloat < 1.0) {
-      Serial.println("Status: Low Load");
-    } else if (currentFloat < 5.0) {
-      Serial.println("Status: Normal Load");
-    } else {
-      Serial.println("Status: High Load");
-    }
+    Serial.print("] Raw mA: ");
+    Serial.println(smartwattData.currentConsumption);
   }
 
   // Check for communication timeout
@@ -132,18 +118,4 @@ void loop() {
   }
 
   delay(100);  // Small delay to prevent overwhelming serial output
-}
-
-// Function to display detailed device information (optional)
-void displayDeviceInfo() {
-  Serial.println("\n=== SmartWatt Device Information ===");
-  Serial.print("Device ID: 0x");
-  Serial.println(receivedData.deviceID, HEX);
-  Serial.print("Current Consumption: ");
-  Serial.print(receivedData.currentConsumption / 1000.0, 2);  // Convert mA back to A
-  Serial.println(" A");
-  Serial.print("Power Estimate: ");
-  Serial.print((receivedData.currentConsumption / 1000.0) * 220, 2);  // Convert mA to A for power calculation
-  Serial.println(" W");
-  Serial.println("=====================================\n");
 }

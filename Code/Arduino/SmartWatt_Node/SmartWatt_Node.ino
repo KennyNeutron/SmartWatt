@@ -38,10 +38,12 @@
 RF24 NRF(9, 10);  // CE, CSN
 byte address[6] = "SWD25";
 
-struct SmartWatt_Data {
-  uint8_t deviceID = 0x00;
-  uint16_t currentConsumption;  // Send as milliamps (mA) - unsigned
+// Data structure matching SmartWatt Node
+struct __attribute__((packed)) SmartWatt_Data {
+  uint8_t deviceID;
+  uint16_t currentConsumption; // Use unsigned for mA
 };
+
 
 SmartWatt_Data smartwattData;
 
@@ -85,8 +87,8 @@ void setup() {
   NRF.openWritingPipe(address);
 }
 
-void loop() {
-  int rawValue = analogRead(sensorPin);
+void loop(){
+    int rawValue = analogRead(sensorPin);
   float voltage = (rawValue * Vref) / 1023.0;
   float current = (voltage - offsetVoltage) / sensitivity;
 
@@ -96,8 +98,8 @@ void loop() {
     processedCurrent = current;  // Keep as float, no rounding
   }
 
-  // Convert to mA (keep sign, don't use abs unless you want only positive values)
-  smartwattData.currentConsumption = (int16_t)(processedCurrent * 1000);
+  // Convert to mA using uint16_t and abs()
+  smartwattData.currentConsumption = (uint16_t)(abs(processedCurrent) * 1000);
 
   Serial.print(F("Raw ADC: "));
   Serial.print(rawValue);
