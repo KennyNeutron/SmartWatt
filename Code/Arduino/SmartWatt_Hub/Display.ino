@@ -4,13 +4,14 @@ float device_EnergyConsumption[3];  // kWh values
 
 // Variables to track time for energy calculation
 unsigned long lastUpdateTime = 0;
+unsigned long lastEnergyUpdate = 0;
+const unsigned long energyUpdateInterval = 60000;  // 60 seconds = 1 minute
 
 void display_Main() {
   u8g2.clearBuffer();
   u8g2.setFontPosTop();
-  u8g2.setFont(u8g2_font_profont12_mr);  // ProFont 12 - good monospace font
+  u8g2.setFont(u8g2_font_profont12_mr); 
   
-  // Headers - adjusted spacing for ProFont12
   u8g2.drawStr(0, 0, "N");
   u8g2.drawStr(18, 0, "mA");
   u8g2.drawStr(50, 0, "W");
@@ -18,17 +19,20 @@ void display_Main() {
   
   char buffer[15];
 
-  // Calculate energy consumption
+  // Calculate energy consumption ONLY every minute
   unsigned long currentTime = millis();
-  if (lastUpdateTime > 0) {
-    unsigned long timeDiff = currentTime - lastUpdateTime;
-    float hours = timeDiff / 3600000.0;  // Convert ms to hours
-    
-    for (int i = 0; i < 3; i++) {
-      device_EnergyConsumption[i] += (device_PowerConsumption[i] * hours) / 1000.0;
+  if (currentTime - lastEnergyUpdate >= energyUpdateInterval) {
+    if (lastUpdateTime > 0) {
+      unsigned long timeDiff = currentTime - lastUpdateTime;
+      float hours = timeDiff / 3600000.0;  // Convert ms to hours
+      
+      for (int i = 0; i < 3; i++) {
+        device_EnergyConsumption[i] += (device_PowerConsumption[i] * hours) / 1000.0;
+      }
     }
+    lastUpdateTime = currentTime;
+    lastEnergyUpdate = currentTime;
   }
-  lastUpdateTime = currentTime;
 
   // Update data from received NRF
   if(smartwattData.deviceID == 0x01){
@@ -36,7 +40,7 @@ void display_Main() {
     device_PowerConsumption[0] = (smartwattData.currentConsumption * 220) / 1000;
   }
   
-  // Device 1 - ProFont12 is about 12px high, so spacing adjusted
+  // Device 1
   u8g2.drawStr(0, 14, "1");
   sprintf(buffer, "%.0f", device_CurrentConsumption[0]);
   u8g2.drawStr(18, 14, buffer);
@@ -89,4 +93,5 @@ void resetEnergyCounters() {
   device_EnergyConsumption[1] = 0.0;
   device_EnergyConsumption[2] = 0.0;
   lastUpdateTime = millis();
+  lastEnergyUpdate = millis();  // Reset energy update timer too
 }
