@@ -39,10 +39,13 @@
 #include <SPI.h>
 #include <nRF24L01.h>
 #include <RF24.h>
+#include <U8g2lib.h>
 
 // NRF24L01 pins for ESP32
 RF24 NRF(4, 5);  // CE, CSN
 byte address[6] = "SWD25";
+
+U8G2_SH1106_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, /* reset=*/U8X8_PIN_NONE);
 
 // Data structure matching SmartWatt Node
 struct SmartWatt_Data {
@@ -56,6 +59,7 @@ const unsigned long dataTimeout = 5000;  // 5 seconds timeout
 
 void setup() {
   Serial.begin(115200);
+  u8g2.begin();
   Serial.println("SmartWatt Receiver Starting...");
   Serial.println("===============================");
 
@@ -84,6 +88,8 @@ void setup() {
 }
 
 void loop() {
+  display_Main();
+
   // Check if data is available
   if (NRF.available()) {
     // Read the data
@@ -94,17 +100,17 @@ void loop() {
     Serial.print("[0x");
     Serial.print(receivedData.deviceID, HEX);
     Serial.print("] | Current: ");
-    
+
     // Convert milliamps back to amps and display with 2 decimal places
     float currentFloat = receivedData.currentConsumption / 1000.0;  // mA to A
     Serial.print(currentFloat, 2);
     Serial.print(" A | ");
-    
+
     // Debug: Show raw milliamp value
     Serial.print("(Raw mA: ");
     Serial.print(receivedData.currentConsumption);
     Serial.print(") | ");
-    
+
     // Status indicator (using threshold instead of exact comparison)
     if (currentFloat < 0.05) {  // Very close to zero
       Serial.println("Status: No Load");
