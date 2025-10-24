@@ -22,9 +22,8 @@ export default function LoginForm() {
 
     try {
       setIsSubmitting(true);
-      // Simulate a short delay before navigation
-      await new Promise((res) => setTimeout(res, 500));
-      router.push("/home"); // Redirect to Home Page
+      await new Promise((res) => setTimeout(res, 400));
+      router.push("/home");
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {
