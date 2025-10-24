@@ -37,7 +37,7 @@ export default function LoginForm() {
         <span className="text-sm">Email</span>
         <input
           type="email"
-          className="w-full rounded-xl border px-3 py-2 outline-none focus:ring-2 ring-offset-0 focus:ring-black/20 dark:focus:ring-white/30 bg-white/80 dark:bg-zinc-900"
+          className="w-full rounded-xl border border-smart-border px-3 py-2 outline-none bg-smart-surface placeholder:text-smart-dim"
           placeholder="you@example.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -48,10 +48,10 @@ export default function LoginForm() {
 
       <label className="grid gap-2">
         <span className="text-sm">Password</span>
-        <div className="flex items-stretch rounded-xl border overflow-hidden focus-within:ring-2 focus-within:ring-black/20 dark:focus-within:ring-white/30">
+        <div className="flex items-stretch rounded-xl border border-smart-border overflow-hidden">
           <input
             type={showPwd ? "text" : "password"}
-            className="w-full px-3 py-2 outline-none bg-white/80 dark:bg-zinc-900"
+            className="w-full px-3 py-2 outline-none bg-smart-surface placeholder:text-smart-dim"
             placeholder="••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -61,7 +61,7 @@ export default function LoginForm() {
           <button
             type="button"
             onClick={() => setShowPwd((v) => !v)}
-            className="px-3 text-sm border-l hover:bg-black/5 dark:hover:bg-white/5"
+            className="px-3 text-sm border-l border-smart-border bg-smart-surface hover:bg-smart-muted/10"
             aria-label={showPwd ? "Hide password" : "Show password"}
           >
             {showPwd ? "Hide" : "Show"}
@@ -70,7 +70,7 @@ export default function LoginForm() {
       </label>
 
       {error && (
-        <p className="text-sm text-red-600 dark:text-red-400" role="alert">
+        <p className="text-sm text-smart-accent" role="alert">
           {error}
         </p>
       )}
@@ -78,14 +78,14 @@ export default function LoginForm() {
       <button
         type="submit"
         disabled={isSubmitting}
-        className="mt-2 inline-flex items-center justify-center rounded-xl px-4 py-2 font-medium border bg-black text-white hover:opacity-90 disabled:opacity-60 dark:bg-white dark:text-black"
+        className="mt-2 inline-flex items-center justify-center rounded-xl px-4 py-2 font-medium border border-transparent bg-smart-accent text-black hover:opacity-95 disabled:opacity-60"
       >
         {isSubmitting ? "Signing in..." : "Sign in"}
       </button>
 
-      <div className="text-xs text-gray-500 text-center">
+      <div className="text-xs text-smart-dim text-center">
         No account yet?{" "}
-        <a href="#" className="underline-offset-4 hover:underline">
+        <a href="#" className="underline underline-offset-2 text-smart-accent">
           Create one
         </a>
       </div>

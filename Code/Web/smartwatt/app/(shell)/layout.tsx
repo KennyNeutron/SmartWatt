@@ -11,10 +11,10 @@ export default function ShellLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-dvh bg-background text-foreground">
-      <div className="grid grid-cols-[18rem_1fr]">
+    <div className="min-h-dvh bg-smart-bg text-smart-fg">
+      <div className="grid [grid-template-columns:18rem_1fr]">
         <Sidebar />
-        <main className="min-h-dvh p-6">{children}</main>
+        <main className="min-h-dvh p-6 bg-smart-surface">{children}</main>
       </div>
     </div>
   );
