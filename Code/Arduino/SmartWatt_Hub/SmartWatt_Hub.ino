@@ -1,7 +1,7 @@
 /*
   SmartWatt Receiver v1.0.0
   Environment:           ESP32 Dev Module
-  Author:                Kenny Neutron
+  Author:                
   Date Started:          2025-08-11
   Pin Usage:
     NRF24L01:
