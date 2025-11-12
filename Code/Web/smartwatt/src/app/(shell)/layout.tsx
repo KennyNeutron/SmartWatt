@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Sidebar from "@/components/SideBar";
+import Sidebar from "@/src/components/SideBar";
 
 export const metadata: Metadata = {
   title: "SmartWatt • Dashboard",
