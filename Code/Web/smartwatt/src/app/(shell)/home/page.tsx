@@ -1,13 +1,6 @@
 import StatCard from "@/src/components/StatCard";
 import ProgressBar from "@/src/components/ProgressBar";
 
-/**
- * Dashboard – matches the provided screenshot
- * Layout notes:
- * - Header: title + subtitle (left), "Welcome, admin" pill (right)
- * - 4 cards in a row on wide screens; responsive down to 2/1 columns
- */
-
 function IconBolt() {
   return (
     <svg

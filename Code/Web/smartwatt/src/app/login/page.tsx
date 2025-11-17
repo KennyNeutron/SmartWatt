@@ -1,24 +1,26 @@
-import type { Metadata } from "next";
 import LoginForm from "@/src/components/LoginForm";
+import { createClient } from "@/src/lib/supabase/server";
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = {
-  title: "Login • SmartWatt",
-  description: "Sign in to SmartWatt",
-};
+export default async function LoginPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-export default function LoginPage() {
+  if (user) redirect("/home");
+
   return (
-    <main className="min-h-dvh grid place-items-center bg-smart-bg text-smart-fg">
-      <div className="w-full max-w-sm p-6 rounded-2xl shadow-lg border border-smart-border bg-smart-panel">
-        <div className="mb-6 text-center">
-          <h1 className="text-2xl font-semibold tracking-tight">SmartWatt</h1>
-          <p className="text-sm text-smart-dim mt-1">Sign in to continue</p>
-        </div>
-        <LoginForm />
-        <p className="mt-6 text-xs text-center text-smart-dim">
-          By continuing, you agree to our Terms and Privacy Policy.
+    <div className="min-h-dvh grid place-items-center bg-gray-50 dark:bg-neutral-950">
+      <div className="w-full max-w-sm rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+        <h1 className="mb-1 text-lg font-semibold text-gray-900 dark:text-gray-50">
+          Sign in
+        </h1>
+        <p className="mb-6 text-sm text-gray-600 dark:text-gray-400">
+          Use your email and password.
         </p>
+        <LoginForm />
       </div>
-    </main>
+    </div>
   );
 }
