@@ -12,14 +12,30 @@ export default {
     extend: {
       colors: {
         smart: {
-          bg: "#0C0C0C",
-          surface: "#181312",
-          panel: "#481E14",
-          muted: "#9B3922",
-          accent: "#F2613F",
-          fg: "#EAEAEA",
-          dim: "#A9A9A9",
-          border: "rgba(255,255,255,0.08)",
+          // --- Blue + Yellow Palette ---
+
+          // Background / surfaces (dark blue base)
+          bg: "#020617", // main app background (very dark navy)
+          surface: "#02081A", // shells / cards
+          panel: "#020617", // deeper panels / sidebar
+
+          // Core palette
+          primary: "#1D4ED8", // strong blue (primary actions)
+          secondary: "#FACC15", // golden yellow (accents / positives)
+
+          // Status / data usage (still only blue & yellow family)
+          low: "#60A5FA", // lighter blue (low usage / very efficient)
+          normal: "#FDE047", // bright yellow (normal usage)
+          warning: "#FACC15", // yellow (warning / high usage)
+          danger: "#CA8A04", // deeper yellow/amber (critical usage)
+          inactive: "#1E293B", // blue-gray (inactive / standby)
+
+          // Text + borders (blue-tinted)
+          fg: "#E5F2FF", // light blue-white (main text)
+          muted: "#BFDBFE", // softer blue for secondary text
+          accent: "#38BDF8", // cyan-ish blue highlight
+          dim: "#7C93C5", // dim / disabled
+          border: "rgba(37, 99, 235, 0.45)", // blue border tint
         },
       },
       gridTemplateColumns: {

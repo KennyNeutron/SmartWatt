@@ -1,17 +1,25 @@
 /* Tailwind v4 entry */
 @import "tailwindcss";
 
-/* SmartWatt theme (dark-first) */
+/* SmartWatt theme (blue + yellow, dark-first) */
 @theme inline {
-  /* Colors => usable as bg-smart-bg, text-smart-fg, etc. */
-  --color-smart-bg: #0c0c0c;
-  --color-smart-surface: #181312;
-  --color-smart-panel: #481e14;
-  --color-smart-muted: #9b3922;
-  --color-smart-accent: #f2613f;
-  --color-smart-fg: #eaeaea;
-  --color-smart-dim: #a9a9a9;
-  --color-smart-border: rgba(255, 255, 255, 0.08);
+  /* Backgrounds */
+  --color-smart-bg: #020617; /* deep navy background */
+  --color-smart-surface: #02081a; /* card/surface */
+  --color-smart-panel: #0f172a; /* inputs/panels */
+
+  /* Core brand */
+  --color-smart-primary: #1d4ed8; /* blue – primary buttons, focus rings */
+  --color-smart-accent: #facc15; /* yellow – accents, highlights */
+
+  /* Text - MODIFIED TO USE YELLOW FOR MUTED */
+  --color-smart-fg: #e5f2ff; /* main text (light blue-white) */
+  --color-smart-muted: #facc15; /* labels, subtle highlights (VIVID YELLOW) */
+  --color-smart-dim: #64748b; /* secondary/dim text (duller slate blue) */
+
+  /* Borders & status */
+  --color-smart-border: rgba(37, 99, 235, 0.45); /* blue border */
+  --color-smart-danger: #f59e0b; /* amber (warning/error, still yellow family) */
 }
 
 /* Global background & text (dark) */
