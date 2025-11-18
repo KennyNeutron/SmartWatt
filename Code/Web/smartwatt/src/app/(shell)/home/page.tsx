@@ -1,164 +1,178 @@
-import StatCard from "@/src/components/StatCard";
-import ProgressBar from "@/src/components/ProgressBar";
+// File: /src/app/(app)/dashboard/page.tsx
 
-function IconBolt() {
-  return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
-    >
-      <path
-        d="M12 2L5 14h6l-1 8 7-12h-6l1-8z"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        fill="none"
-      />
-    </svg>
-  );
+import { createClient } from "@/src/lib/supabase/server";
+import { redirect } from "next/navigation";
+
+type PowerSource = "grid" | "solar";
+
+interface PowerSnapshot {
+  deviceId: string;
+  gridUsageKwh: number;
+  solarUsageKwh: number;
+  currentSource: PowerSource;
 }
 
-function IconSun() {
-  return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
-    >
-      <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.5" />
-      <path
-        d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"
-        stroke="currentColor"
-        strokeWidth="1.5"
-      />
-    </svg>
-  );
+async function getPowerSnapshot(userId: string): Promise<PowerSnapshot> {
+  // TODO: Replace this stub with real data from your DB
+  return {
+    deviceId: "SW-DEV-00123", // look up the device assigned to this user
+    gridUsageKwh: 6.2, // kWh drawn from the grid today
+    solarUsageKwh: 3.4, // kWh supplied by solar today
+    currentSource: "solar", // decide based on live readings (see notes)
+  };
 }
 
-function IconBattery() {
-  return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
-    >
-      <rect
-        x="2"
-        y="7"
-        width="18"
-        height="10"
-        rx="2"
-        ry="2"
-        stroke="currentColor"
-        strokeWidth="1.5"
-      />
-      <rect
-        x="20"
-        y="10"
-        width="2"
-        height="4"
-        rx="0.5"
-        stroke="currentColor"
-        strokeWidth="1.5"
-      />
-    </svg>
-  );
-}
+export default async function DashboardPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-function IconTrendUp() {
-  return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
-    >
-      <path
-        d="M3 17l6-6 4 4 7-7"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        fill="none"
-      />
-      <path d="M14 8h6v6" stroke="currentColor" strokeWidth="1.5" fill="none" />
-    </svg>
-  );
-}
+  if (!user) redirect("/login");
 
-export default function DashboardPage() {
-  // Example values to match screenshot
-  const currentUsageKWh = 8.5;
-  const dailyLimitKWh = 15;
-  const solarKWh = 2.1;
-  const batteryKWh = 1.8;
-  const efficiencyPct = 87;
-  const usagePct = (currentUsageKWh / dailyLimitKWh) * 100;
+  const snapshot = await getPowerSnapshot(user.id);
+  const { deviceId, gridUsageKwh, solarUsageKwh, currentSource } = snapshot;
+
+  const total = gridUsageKwh + solarUsageKwh || 1;
+  const solarPercent = Math.round((solarUsageKwh / total) * 100);
+  const gridPercent = 100 - solarPercent;
+
+  const isSolar = currentSource === "solar";
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
+    <div className="min-h-dvh bg-smart-bg px-8 py-6 text-smart-fg">
+      {/* Header with device and current source */}
+      <header className="mb-8 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-50">
-            Dashboard
-          </h1>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Real-time Monitoring
-          </p>
+          <h1 className="text-2xl font-semibold">Dashboard</h1>
+          <p className="text-sm text-smart-dim">Real-time monitoring</p>
         </div>
 
-        <div className="rounded-full border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm dark:border-neutral-800 dark:bg-neutral-900 dark:text-gray-200">
-          Welcome, admin
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="rounded-full border border-smart-border px-4 py-1.5 text-xs text-smart-muted">
+            Device ID:{" "}
+            <span className="font-mono text-smart-fg">{deviceId}</span>
+          </div>
+
+          <div
+            className={`rounded-full border px-4 py-1.5 text-xs font-semibold ${
+              isSolar
+                ? "border-smart-accent/60 bg-smart-accent/15 text-smart-accent"
+                : "border-smart-primary/70 bg-smart-primary/20 text-smart-primary"
+            }`}
+          >
+            Current source: {isSolar ? "Solar" : "Grid"}
+          </div>
         </div>
-      </div>
+      </header>
 
-      {/* Cards */}
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
-        {/* Current Usage */}
-        <StatCard
-          title="Current Usage"
-          value={`${currentUsageKWh} kWh`}
-          subtitle={`of ${dailyLimitKWh} kWh daily limit`}
-          icon={<IconBolt />}
-        >
-          <ProgressBar
-            percent={usagePct}
-            ariaLabel="Current usage vs daily limit"
-          />
-        </StatCard>
+      {/* Main metrics: grid vs solar */}
+      <main className="space-y-6">
+        <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+          {/* Grid usage */}
+          <div className="rounded-2xl border border-smart-border bg-smart-surface p-6">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-sm font-medium text-smart-muted">
+                Grid usage
+              </h2>
+              {/* Simple lightning icon */}
+              <span className="text-smart-primary">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                </svg>
+              </span>
+            </div>
 
-        {/* Solar Generation */}
-        <StatCard
-          title="Solar Generation"
-          value={`${solarKWh} kWh`}
-          subtitle="Generating power"
-          subtitleTone="positive"
-          icon={<IconSun />}
-        />
+            <p className="text-3xl font-semibold">
+              {gridUsageKwh.toFixed(1)}{" "}
+              <span className="text-base font-normal text-smart-muted">
+                kWh
+              </span>
+            </p>
+            <p className="mt-2 text-xs text-smart-dim">
+              Energy drawn from the grid today.
+            </p>
+          </div>
 
-        {/* Battery Storage */}
-        <StatCard
-          title="Battery Storage"
-          value={`${batteryKWh} kWh`}
-          subtitle="Available backup power"
-          icon={<IconBattery />}
-        />
+          {/* Solar usage */}
+          <div className="rounded-2xl border border-smart-border bg-smart-surface p-6">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-sm font-medium text-smart-muted">
+                Solar usage
+              </h2>
+              {/* Simple sun icon */}
+              <span className="text-smart-accent">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="12" cy="12" r="4" />
+                  <path d="M12 2v2" />
+                  <path d="M12 20v2" />
+                  <path d="m4.93 4.93 1.41 1.41" />
+                  <path d="m17.66 17.66 1.41 1.41" />
+                  <path d="M2 12h2" />
+                  <path d="M20 12h2" />
+                  <path d="m6.34 17.66-1.41 1.41" />
+                  <path d="m19.07 4.93-1.41 1.41" />
+                </svg>
+              </span>
+            </div>
 
-        {/* Efficiency */}
-        <StatCard
-          title="Efficiency"
-          value={`${efficiencyPct}%`}
-          subtitle="+2% from yesterday"
-          subtitleTone="positive"
-          icon={<IconTrendUp />}
-        />
-      </div>
+            <p className="text-3xl font-semibold">
+              {solarUsageKwh.toFixed(1)}{" "}
+              <span className="text-base font-normal text-smart-muted">
+                kWh
+              </span>
+            </p>
+            <p className="mt-2 text-xs text-smart-dim">
+              Energy supplied by solar today.
+            </p>
+          </div>
+
+          {/* Energy mix */}
+          <div className="rounded-2xl border border-smart-border bg-smart-surface p-6">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-sm font-medium text-smart-muted">
+                Energy mix
+              </h2>
+            </div>
+
+            <p className="text-3xl font-semibold">
+              {(gridUsageKwh + solarUsageKwh).toFixed(1)}{" "}
+              <span className="text-base font-normal text-smart-muted">
+                kWh
+              </span>
+            </p>
+
+            <p className="mt-2 text-xs text-smart-dim">
+              {solarPercent}% from solar, {gridPercent}% from grid.
+            </p>
+
+            <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-smart-panel">
+              <div
+                className="h-full bg-smart-accent"
+                style={{ width: `${solarPercent}%` }}
+              />
+            </div>
+          </div>
+        </section>
+      </main>
     </div>
   );
 }
