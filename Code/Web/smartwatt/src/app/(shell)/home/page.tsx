@@ -1,9 +1,11 @@
-// File: /src/app/(app)/dashboard/page.tsx
+// File: /src/app/(shell)/home/page.tsx
 
 import { createClient } from "@/src/lib/supabase/server";
 import { redirect } from "next/navigation";
 
 type PowerSource = "grid" | "solar";
+
+type SupabaseClient = Awaited<ReturnType<typeof createClient>>;
 
 interface PowerSnapshot {
   deviceId: string;
@@ -12,13 +14,78 @@ interface PowerSnapshot {
   currentSource: PowerSource;
 }
 
-async function getPowerSnapshot(userId: string): Promise<PowerSnapshot> {
-  // TODO: Replace this stub with real data from your DB
+async function getPowerSnapshot(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<PowerSnapshot> {
+  // 1) Find the first device assigned to this user
+  const { data: device, error: deviceError } = await supabase
+    .from("devices")
+    .select("id, hardware_id")
+    .eq("owner_user_id", userId)
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (deviceError) {
+    console.error("Error fetching device:", deviceError.message);
+  }
+
+  if (!device) {
+    // No device registered yet – show a safe empty state
+    return {
+      deviceId: "No device assigned",
+      gridUsageKwh: 0,
+      solarUsageKwh: 0,
+      currentSource: "grid",
+    };
+  }
+
+  // 2) Fetch today's aggregated usage (if any)
+  const today = new Date();
+  const todayStr = today.toISOString().slice(0, 10); // YYYY-MM-DD
+
+  const { data: dailyUsage, error: dailyError } = await supabase
+    .from("daily_usage")
+    .select("grid_kwh, solar_kwh")
+    .eq("device_id", device.id)
+    .eq("day", todayStr)
+    .maybeSingle();
+
+  if (dailyError) {
+    console.error("Error fetching daily_usage:", dailyError.message);
+  }
+
+  const gridUsageKwh = dailyUsage?.grid_kwh ?? 0;
+  const solarUsageKwh = dailyUsage?.solar_kwh ?? 0;
+
+  // 3) Latest reading to know which source is currently active
+  const { data: latestReading, error: readingsError } = await supabase
+    .from("device_readings")
+    .select("current_source")
+    .eq("device_id", device.id)
+    .order("recorded_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (readingsError) {
+    console.error("Error fetching device_readings:", readingsError.message);
+  }
+
+  let currentSource: PowerSource = "grid";
+
+  if (
+    latestReading?.current_source === "solar" ||
+    latestReading?.current_source === "grid"
+  ) {
+    currentSource = latestReading.current_source as PowerSource;
+  }
+
   return {
-    deviceId: "SW-DEV-00123", // look up the device assigned to this user
-    gridUsageKwh: 6.2, // kWh drawn from the grid today
-    solarUsageKwh: 3.4, // kWh supplied by solar today
-    currentSource: "solar", // decide based on live readings (see notes)
+    deviceId: device.hardware_id ?? String(device.id),
+    gridUsageKwh,
+    solarUsageKwh,
+    currentSource,
   };
 }
 
@@ -28,9 +95,11 @@ export default async function DashboardPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) redirect("/login");
+  if (!user) {
+    redirect("/login");
+  }
 
-  const snapshot = await getPowerSnapshot(user.id);
+  const snapshot = await getPowerSnapshot(supabase, user.id);
   const { deviceId, gridUsageKwh, solarUsageKwh, currentSource } = snapshot;
 
   const total = gridUsageKwh + solarUsageKwh || 1;
@@ -57,7 +126,7 @@ export default async function DashboardPage() {
           <div
             className={`rounded-full border px-4 py-1.5 text-xs font-semibold ${
               isSolar
-                ? "border-smart-accent/60 bg-smart-accent/15 text-smart-accent"
+                ? "border-smart-accent/70 bg-smart-accent/20 text-smart-accent"
                 : "border-smart-primary/70 bg-smart-primary/20 text-smart-primary"
             }`}
           >
@@ -75,7 +144,7 @@ export default async function DashboardPage() {
               <h2 className="text-sm font-medium text-smart-muted">
                 Grid usage
               </h2>
-              {/* Simple lightning icon */}
+              {/* Lightning icon */}
               <span className="text-smart-primary">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -109,7 +178,7 @@ export default async function DashboardPage() {
               <h2 className="text-sm font-medium text-smart-muted">
                 Solar usage
               </h2>
-              {/* Simple sun icon */}
+              {/* Sun icon */}
               <span className="text-smart-accent">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
