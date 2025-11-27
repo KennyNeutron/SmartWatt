@@ -41,28 +41,10 @@ async function getPowerSnapshot(
     };
   }
 
-  // 2) Fetch today's aggregated usage (if any)
-  const today = new Date();
-  const todayStr = today.toISOString().slice(0, 10); // YYYY-MM-DD
-
-  const { data: dailyUsage, error: dailyError } = await supabase
-    .from("daily_usage")
-    .select("grid_kwh, solar_kwh")
-    .eq("device_id", device.id)
-    .eq("day", todayStr)
-    .maybeSingle();
-
-  if (dailyError) {
-    console.error("Error fetching daily_usage:", dailyError.message);
-  }
-
-  const gridUsageKwh = dailyUsage?.grid_kwh ?? 0;
-  const solarUsageKwh = dailyUsage?.solar_kwh ?? 0;
-
-  // 3) Latest reading to know which source is currently active
+  // 2) Get the latest device_readings row for this device
   const { data: latestReading, error: readingsError } = await supabase
     .from("device_readings")
-    .select("current_source")
+    .select("grid_kwh, solar_kwh, current_source")
     .eq("device_id", device.id)
     .order("recorded_at", { ascending: false })
     .limit(1)
@@ -72,8 +54,12 @@ async function getPowerSnapshot(
     console.error("Error fetching device_readings:", readingsError.message);
   }
 
-  let currentSource: PowerSource = "grid";
+  const gridUsageKwh = latestReading ? Number(latestReading.grid_kwh ?? 0) : 0;
+  const solarUsageKwh = latestReading
+    ? Number(latestReading.solar_kwh ?? 0)
+    : 0;
 
+  let currentSource: PowerSource = "grid";
   if (
     latestReading?.current_source === "solar" ||
     latestReading?.current_source === "grid"
@@ -168,7 +154,7 @@ export default async function DashboardPage() {
               </span>
             </p>
             <p className="mt-2 text-xs text-smart-dim">
-              Energy drawn from the grid today.
+              Energy drawn from the grid based on the latest reading.
             </p>
           </div>
 
@@ -210,7 +196,7 @@ export default async function DashboardPage() {
               </span>
             </p>
             <p className="mt-2 text-xs text-smart-dim">
-              Energy supplied by solar today.
+              Energy supplied by solar based on the latest reading.
             </p>
           </div>
 
@@ -230,7 +216,8 @@ export default async function DashboardPage() {
             </p>
 
             <p className="mt-2 text-xs text-smart-dim">
-              {solarPercent}% from solar, {gridPercent}% from grid.
+              {solarPercent}% from solar, {gridPercent}% from grid (latest
+              reading).
             </p>
 
             <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-smart-panel">
