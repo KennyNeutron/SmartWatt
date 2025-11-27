@@ -14,6 +14,10 @@ const char* ENDPOINT =
   "https://aeayentwrnmatnsdpoas.supabase.co/rest/v1/device_readings";
 const char* ENDPOINT_HOST = "aeayentwrnmatnsdpoas.supabase.co"; // for DNS test
 
+// REST endpoint for device_config
+const char* CONFIG_ENDPOINT_BASE =
+  "https://aeayentwrnmatnsdpoas.supabase.co/rest/v1/device_config";
+
 // anon key (same as NEXT_PUBLIC_SUPABASE_ANON_KEY)
 const char* SUPABASE_ANON_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlYXllbnR3cm5tYXRuc2Rwb2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjExMDI4MjAsImV4cCI6MjA3NjY3ODgyMH0.0kIWd35tsnBtt1XYr_3jIGnRE0PmY8k77hu8r09hxMk";
@@ -24,6 +28,14 @@ const char* DEVICE_ID = "8f05d9af-71ad-4b4b-a927-9fd9bc6fd337";
 /* ====== TIMING ====== */
 const unsigned long SEND_INTERVAL_MS = 10UL * 1000UL; // 10 seconds
 unsigned long lastSend = 0;
+
+/* ====== DEVICE CONFIG CACHE ====== */
+float g_dailyLimitKwh = 0.0f;
+bool  g_limitEnabled  = false;
+bool  g_hasConfig     = false;
+
+const unsigned long CONFIG_REFRESH_INTERVAL_MS = 5UL * 60UL * 1000UL;
+unsigned long lastConfigFetchMs = 0;
 
 /* ====== RANDOM HELPERS FOR DUMMY DATA ====== */
 float randFloat(float minVal, float maxVal) {
@@ -75,6 +87,104 @@ void printTlsLastError(WiFiClientSecure& client) {
   } else {
     Serial.println("TLS lastError: (none reported)");
   }
+}
+
+/* ====== FETCH FROM SUPABASE device_config ====== */
+bool fetchDeviceConfig() {
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("fetchDeviceConfig: WiFi not connected");
+    return false;
+  }
+
+  WiFiClientSecure client;
+  client.setInsecure();              // development only; use CA in production
+  client.setHandshakeTimeout(15000);
+  client.setTimeout(15000);
+
+  HTTPClient http;
+  http.setConnectTimeout(15000);
+
+  // Build URL:
+  // /rest/v1/device_config
+  //   ?select=daily_limit_kwh,limit_enabled
+  //   &device_id=eq.<DEVICE_ID>
+  //   &order=updated_at.desc
+  //   &limit=1
+  String url = String(CONFIG_ENDPOINT_BASE) +
+               "?select=daily_limit_kwh,limit_enabled" +
+               "&device_id=eq." + DEVICE_ID +
+               "&order=updated_at.desc&limit=1";
+
+  Serial.printf("GET %s\n", url.c_str());
+
+  if (!http.begin(client, url)) {
+    Serial.println("HTTP begin() failed (device_config)");
+    printTlsLastError(client);
+    return false;
+  }
+
+  http.addHeader("apikey", SUPABASE_ANON_KEY);
+  http.addHeader("Authorization", String("Bearer ") + SUPABASE_ANON_KEY);
+
+  int code = http.GET();
+  String resp = http.getString();
+
+  Serial.printf("HTTP %d (device_config): %s\n", code, resp.c_str());
+
+  if (code <= 0) {
+    Serial.printf("HTTP error (device_config): %s\n",
+                  http.errorToString(code).c_str());
+    printTlsLastError(client);
+    http.end();
+    client.stop();
+    return false;
+  }
+
+  if (code < 200 || code >= 300) {
+    Serial.println("Non-2xx response when fetching device_config");
+    http.end();
+    client.stop();
+    return false;
+  }
+
+  // Supabase returns an array: [ { ... } ]
+  StaticJsonDocument<512> doc;
+  DeserializationError err = deserializeJson(doc, resp);
+  if (err) {
+    Serial.print("JSON parse error (device_config): ");
+    Serial.println(err.c_str());
+    http.end();
+    client.stop();
+    return false;
+  }
+
+  if (!doc.is<JsonArray>() || doc.size() == 0) {
+    Serial.println("No device_config row found for this device_id.");
+    http.end();
+    client.stop();
+    return false;
+  }
+
+  JsonObject cfg = doc[0];
+
+  if (cfg.containsKey("daily_limit_kwh")) {
+    g_dailyLimitKwh = cfg["daily_limit_kwh"].as<float>();
+  }
+  if (cfg.containsKey("limit_enabled")) {
+    g_limitEnabled = cfg["limit_enabled"].as<bool>();
+  }
+
+  g_hasConfig = true;
+
+  Serial.printf(
+    "Config loaded: limit_enabled=%s, daily_limit_kwh=%.2f kWh\n",
+    g_limitEnabled ? "true" : "false",
+    g_dailyLimitKwh
+  );
+
+  http.end();
+  client.stop();
+  return true;
 }
 
 /* ====== POST TO SUPABASE device_readings ====== */
@@ -151,18 +261,27 @@ void setup() {
     Serial.print(".");
   }
   Serial.println(" connected!");
-  Serial.print("IP: "); Serial.println(WiFi.localIP());
+  Serial.print("IP: ");
+  Serial.println(WiFi.localIP());
 
   // Quick DNS resolution check
   IPAddress ip;
   if (WiFi.hostByName(ENDPOINT_HOST, ip)) {
-    Serial.print("Resolved host to: "); Serial.println(ip);
+    Serial.print("Resolved host to: ");
+    Serial.println(ip);
   } else {
     Serial.println("DNS resolution FAILED");
   }
 
   // Get time for TLS and for recorded_at
   syncTime();
+
+  // Fetch initial device configuration from Supabase
+  if (fetchDeviceConfig()) {
+    lastConfigFetchMs = millis();
+  } else {
+    Serial.println("Warning: could not load device_config; using defaults.");
+  }
 }
 
 /* ====== LOOP ====== */
@@ -180,6 +299,15 @@ void loop() {
   }
 
   unsigned long now = millis();
+
+  // Periodically refresh device configuration
+  if (WiFi.status() == WL_CONNECTED &&
+      (lastConfigFetchMs == 0 || now - lastConfigFetchMs >= CONFIG_REFRESH_INTERVAL_MS)) {
+    if (fetchDeviceConfig()) {
+      lastConfigFetchMs = now;
+    }
+  }
+
   if (now - lastSend >= SEND_INTERVAL_MS) {
     lastSend = now;
     postReading();
