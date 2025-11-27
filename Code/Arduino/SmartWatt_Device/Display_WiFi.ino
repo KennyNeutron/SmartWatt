@@ -4,6 +4,7 @@ bool Reconnecting_WiFi = false;
 bool WiFi_Connected_FirstTime = false;
 
 uint32_t LastWifi_CheckMS = 0;
+uint16_t WiFi_Check_IntervalMS = 9000;
 uint16_t WiFi_Connected_CountDown = 10000;
 
 
@@ -30,7 +31,7 @@ void Display_WiFi() {
     sprintf(buffer, "%lums", (millis() - LastWifi_CheckMS));
     u8g2.drawStr(0, 48, buffer);
 
-    if (millis() - LastWifi_CheckMS > 30000) {
+    if (millis() - LastWifi_CheckMS > WiFi_Check_IntervalMS) {
       LastWifi_CheckMS = millis();
       WiFi.reconnect();
     }
@@ -52,7 +53,7 @@ void Display_WiFi() {
 
     if(WiFi_Connected_CountDown - (millis() - LastWifi_CheckMS)==0 || (millis() - LastWifi_CheckMS) > WiFi_Connected_CountDown) {
       Display_WiFi_Exit();
-      CurrentScreen = Home_Screen;
+      CurrentScreen = NTP_Screen;
     }
   }
 }

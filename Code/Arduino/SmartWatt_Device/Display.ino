@@ -6,6 +6,9 @@ void Display_Main() {
         case Home_Screen:
             Display_Home();
             break;
+        case NTP_Screen:
+            Display_NTP();
+            break;
         default:
             Display_WiFi();
             break;

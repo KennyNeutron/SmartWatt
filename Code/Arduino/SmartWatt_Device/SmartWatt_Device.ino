@@ -49,7 +49,7 @@ U8G2_SH1106_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, /* reset=*/U8X8_PIN_NONE);
 uint32_t CurrentScreen = 0x0000;
 
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(9600);
   Serial.println("SmartWatt Device Starting...");
 
   u8g2.begin();

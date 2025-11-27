@@ -2,29 +2,201 @@
 
 // File: /src/app/(shell)/power-limiter/page.tsx
 
-import { useState, ChangeEvent, FormEvent } from "react";
+import { useState, useEffect, ChangeEvent, FormEvent } from "react";
+import { createClient } from "@/src/lib/supabase/client";
 
 const MIN_LIMIT = 1;
 const MAX_LIMIT = 15;
 
 export default function PowerLimiterPage() {
-  const [limit, setLimit] = useState<number>(8);
+  const [limitInput, setLimitInput] = useState<string>("8");
   const [appliedLimit, setAppliedLimit] = useState<number>(8);
 
-  function handleChange(e: ChangeEvent<HTMLInputElement>) {
-    const value = Number(e.target.value);
-    if (Number.isNaN(value)) {
-      setLimit(MIN_LIMIT);
-      return;
+  const [deviceId, setDeviceId] = useState<string | null>(null);
+  const [configId, setConfigId] = useState<string | null>(null);
+
+  const [loadingInitial, setLoadingInitial] = useState<boolean>(true);
+  const [saving, setSaving] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadDeviceAndConfig() {
+      try {
+        const supabase = createClient();
+
+        // Get current user
+        const {
+          data: { user },
+          error: userError,
+        } = await supabase.auth.getUser();
+
+        if (userError) {
+          console.error("Error getting user:", userError.message);
+          if (!isMounted) return;
+          setErrorMessage("Unable to load user information.");
+          return;
+        }
+
+        if (!user) {
+          if (!isMounted) return;
+          setErrorMessage("You are not signed in.");
+          return;
+        }
+
+        // Get the first device for this user (same logic as home page)
+        const { data: device, error: deviceError } = await supabase
+          .from("devices")
+          .select("id, hardware_id")
+          .eq("owner_user_id", user.id)
+          .order("created_at", { ascending: true })
+          .limit(1)
+          .maybeSingle();
+
+        if (deviceError) {
+          console.error("Error loading device:", deviceError.message);
+          if (!isMounted) return;
+          setErrorMessage("Failed to load device information.");
+          return;
+        }
+
+        if (!device) {
+          if (!isMounted) return;
+          setErrorMessage("No device found for this account.");
+          return;
+        }
+
+        if (!isMounted) return;
+
+        setDeviceId(device.id);
+
+        // Load existing device_config for this device, if any
+        const { data: configRows, error: configError } = await supabase
+          .from("device_config")
+          .select("id, daily_limit_kwh, limit_enabled")
+          .eq("device_id", device.id)
+          .order("updated_at", { ascending: false })
+          .limit(1);
+
+        if (configError) {
+          console.error("Error loading device_config:", configError.message);
+          if (!isMounted) return;
+          setErrorMessage("Failed to load power limiter configuration.");
+          return;
+        }
+
+        if (configRows && configRows.length > 0) {
+          const cfg = configRows[0];
+
+          setConfigId(cfg.id);
+
+          const value =
+            typeof cfg.daily_limit_kwh === "number"
+              ? cfg.daily_limit_kwh
+              : appliedLimit;
+
+          const clamped = Math.min(
+            MAX_LIMIT,
+            Math.max(MIN_LIMIT, value || MIN_LIMIT)
+          );
+
+          setAppliedLimit(clamped);
+          setLimitInput(clamped.toString());
+        } else {
+          // No config yet; keep defaults
+          setConfigId(null);
+          setLimitInput(appliedLimit.toString());
+        }
+      } finally {
+        if (isMounted) {
+          setLoadingInitial(false);
+        }
+      }
     }
-    const clamped = Math.min(MAX_LIMIT, Math.max(MIN_LIMIT, value));
-    setLimit(clamped);
+
+    loadDeviceAndConfig();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  function handleChange(e: ChangeEvent<HTMLInputElement>) {
+    // Let the user type freely; validation happens on submit
+    setLimitInput(e.target.value);
   }
 
-  function handleApply(e: FormEvent) {
+  async function handleApply(e: FormEvent) {
     e.preventDefault();
-    setAppliedLimit(limit);
-    // TODO: Persist appliedLimit to backend (Supabase/device configuration).
+    setErrorMessage(null);
+
+    if (!deviceId) {
+      setErrorMessage("No device linked to this account. Cannot save limit.");
+      return;
+    }
+
+    const raw = limitInput.trim().replace(",", ".");
+
+    if (raw === "") {
+      setErrorMessage("Please enter a daily limit value.");
+      return;
+    }
+
+    const parsed = Number(raw);
+
+    if (!Number.isFinite(parsed)) {
+      setErrorMessage("Invalid number. Please enter a valid value in kWh.");
+      return;
+    }
+
+    // Allow decimals, but clamp to min and max
+    const clamped = Math.min(MAX_LIMIT, Math.max(MIN_LIMIT, parsed));
+
+    setSaving(true);
+
+    try {
+      const supabase = createClient();
+
+      const payload = {
+        device_id: deviceId,
+        daily_limit_kwh: clamped,
+        limit_enabled: true,
+      };
+
+      let error = null;
+
+      if (configId) {
+        const { error: updateError } = await supabase
+          .from("device_config")
+          .update(payload)
+          .eq("id", configId);
+        error = updateError;
+      } else {
+        const { data: inserted, error: insertError } = await supabase
+          .from("device_config")
+          .insert(payload)
+          .select("id")
+          .limit(1);
+        error = insertError;
+
+        if (!error && inserted && inserted.length > 0) {
+          setConfigId(inserted[0].id);
+        }
+      }
+
+      if (error) {
+        console.error("Error saving device_config:", error.message);
+        setErrorMessage("Failed to save daily limit. Please try again.");
+        return;
+      }
+
+      setAppliedLimit(clamped);
+      // Normalize the input string to the saved value (with decimals preserved as needed)
+      setLimitInput(clamped.toString());
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -55,7 +227,7 @@ export default function PowerLimiterPage() {
               <h2 className="text-lg font-semibold">Daily Consumption Limit</h2>
               <p className="text-sm text-smart-dim">
                 Enter maximum daily energy consumption ({MIN_LIMIT} -{" "}
-                {MAX_LIMIT} kWh).
+                {MAX_LIMIT} kWh). Decimals are allowed.
               </p>
             </div>
           </div>
@@ -70,12 +242,12 @@ export default function PowerLimiterPage() {
             </label>
             <input
               id="daily-limit"
-              type="number"
-              min={MIN_LIMIT}
-              max={MAX_LIMIT}
-              value={limit}
+              type="text"
+              inputMode="decimal"
+              value={limitInput}
               onChange={handleChange}
-              className="w-full rounded-xl border border-smart-border bg-smart-panel px-4 py-3 text-base text-smart-fg outline-none placeholder:text-smart-dim/80 focus:border-smart-primary focus:ring-1 focus:ring-smart-primary"
+              disabled={loadingInitial || saving}
+              className="w-full rounded-xl border border-smart-border bg-smart-panel px-4 py-3 text-base text-smart-fg outline-none placeholder:text-smart-dim/80 focus:border-smart-primary focus:ring-1 focus:ring-smart-primary disabled:cursor-not-allowed disabled:opacity-60"
               placeholder="Enter daily limit in kWh"
             />
             <div className="mt-1 flex justify-between text-xs text-smart-dim">
@@ -84,13 +256,18 @@ export default function PowerLimiterPage() {
             </div>
           </div>
 
+          {errorMessage && (
+            <p className="text-sm text-red-400">{errorMessage}</p>
+          )}
+
           <div className="border-t border-smart-border/60 pt-4">
             <button
               type="submit"
-              className="inline-flex items-center gap-2 rounded-xl bg-smart-primary px-5 py-2.5 text-sm font-semibold text-smart-fg shadow-md shadow-smart-primary/40 transition hover:bg-smart-accent"
+              disabled={loadingInitial || saving}
+              className="inline-flex items-center gap-2 rounded-xl bg-smart-primary px-5 py-2.5 text-sm font-semibold text-smart-fg shadow-md shadow-smart-primary/40 transition hover:bg-smart-accent disabled:cursor-not-allowed disabled:opacity-60"
             >
               <IconCheck />
-              <span>Apply Daily Limit</span>
+              <span>{saving ? "Saving..." : "Apply Daily Limit"}</span>
             </button>
           </div>
         </form>
@@ -103,11 +280,17 @@ export default function PowerLimiterPage() {
             <IconStatus />
           </span>
           <p className="text-smart-muted">
-            Daily energy consumption limit set to{" "}
-            <span className="font-semibold text-smart-fg">
-              {appliedLimit} kWh
-            </span>
-            . The system will monitor and control your usage accordingly.
+            {loadingInitial ? (
+              <span>Loading current daily limit...</span>
+            ) : (
+              <>
+                Daily energy consumption limit set to{" "}
+                <span className="font-semibold text-smart-fg">
+                  {appliedLimit} kWh
+                </span>
+                . The system will monitor and control your usage accordingly.
+              </>
+            )}
           </p>
         </div>
       </section>
