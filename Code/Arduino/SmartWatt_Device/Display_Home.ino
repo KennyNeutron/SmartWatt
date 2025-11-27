@@ -1,4 +1,15 @@
+bool Display_Home_Initialized = false;
+
+void Display_Home_Init() {
+  Display_Home_Initialized = true;
+}
 void Display_Home() {
+  if (!Display_Home_Initialized) {
+    Display_Home_Init();
+  }
+
+
+
   u8g2.clearBuffer();
   u8g2.setFontPosTop();
   u8g2.setFont(u8g2_font_profont12_mr);
@@ -13,11 +24,13 @@ void Display_Home() {
   u8g2.drawStr(0, 32, buffer);
 
 
-  // Fetch initial device configuration from Supabase
-  if (fetchDeviceConfig()) {
-    lastConfigFetchMs = millis();
-  } else {
-    Serial.println("Warning: could not load device_config; using defaults.");
+  // Periodically refresh device configuration
+  if (millis() - lastConfigFetchMs > CONFIG_REFRESH_INTERVAL_MS) {
+    if (fetchDeviceConfig()) {
+      lastConfigFetchMs = millis();
+    } else {
+      Serial.println("Warning: could not refresh device_config; keeping old values.");
+    }
   }
 }
 

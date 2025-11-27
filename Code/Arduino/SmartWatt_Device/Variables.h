@@ -28,7 +28,7 @@ float g_dailyLimitKwh = 0.0f;
 bool  g_limitEnabled  = false;
 bool  g_hasConfig     = false;
 
-const unsigned long CONFIG_REFRESH_INTERVAL_MS = 5UL * 60UL * 1000UL;
+uint32_t CONFIG_REFRESH_INTERVAL_MS = 60000;
 unsigned long lastConfigFetchMs = 0;
 
 #define WiFi_Screen 0x1000

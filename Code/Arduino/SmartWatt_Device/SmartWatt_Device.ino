@@ -54,7 +54,6 @@ void setup() {
 
   u8g2.begin();
   CurrentScreen = WiFi_Screen;
-
 }
 
 void loop() {
