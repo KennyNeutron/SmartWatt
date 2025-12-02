@@ -12,6 +12,18 @@ void Display_Home() {
     Display_Home_Init();
   }
 
+  // Read Sensor
+  CurrentUsageW = ACS712_ReadPowerW();
+  // Simple threshold to decide if we are generating (Solar) or consuming (Grid)
+  // Since ACS712 is bidirectional, but we are calculating RMS (magnitude), we can't easily tell direction without voltage phase reference.
+  // For now, we assume "Grid" if consuming.
+  // If the user has a setup where Solar is injected, we might need direction.
+  // But without a voltage sensor for phase comparison, we can only measure Magnitude.
+  // So "CurrentPower" (Grid/Solar) might need to be inferred or manually set?
+  // The original code had `CurrentPower = 0; // 0 = Grid, 1 = Solar`.
+  // Let's assume it's always Grid for now unless we have logic to detect Solar.
+  CurrentPower = 0; 
+
   u8g2.clearBuffer();
   u8g2.setFontPosTop();
   u8g2.setFont(u8g2_font_profont12_mr);

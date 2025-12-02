@@ -1,3 +1,8 @@
+#ifndef VARIABLES_H
+#define VARIABLES_H
+
+#include <Arduino.h>
+
 /* ====== WIFI CONFIG ====== */
 const char* WIFI_SSID     = "KennyNeutron's IPhone";
 const char* WIFI_PASSWORD = "one2nine";
@@ -31,6 +36,15 @@ bool  g_hasConfig     = false;
 uint32_t CONFIG_REFRESH_INTERVAL_MS = 60000;
 unsigned long lastConfigFetchMs = 0;
 
+/* ====== SCREEN DEFINITIONS ====== */
 #define WiFi_Screen 0x1000
 #define NTP_Screen  0x2000
 #define Home_Screen 0x0000
+
+/* ====== ACS712 CONFIG ====== */
+const int ACS712_PIN = 34; // ADC1_CH6
+const float SENSITIVITY = 0.100f; // 100mV/A for 20A model
+const float ZERO_CURRENT_OFFSET = 2.5f; // VCC/2 = 2.5V for 5V sensor
+const float SYSTEM_VOLTAGE = 230.0f; // Fixed voltage for power calc
+
+#endif
