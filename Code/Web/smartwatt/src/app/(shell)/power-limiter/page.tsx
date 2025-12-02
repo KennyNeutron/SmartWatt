@@ -48,7 +48,7 @@ export default function PowerLimiterPage() {
         // Get the first device for this user (same logic as home page)
         const { data: device, error: deviceError } = await supabase
           .from("devices")
-          .select("id, hardware_id")
+          .select("id, manufacturer_id")
           .eq("owner_user_id", user.id)
           .order("created_at", { ascending: true })
           .limit(1)
