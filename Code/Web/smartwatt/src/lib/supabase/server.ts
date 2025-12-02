@@ -1,5 +1,6 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies as nextCookies } from "next/headers";
+import { Database } from "@/src/types/database.types";
 
 /**
  * Server-side Supabase client for RSC/layouts/route handlers.
@@ -8,7 +9,7 @@ import { cookies as nextCookies } from "next/headers";
 export async function createClient() {
   const cookieStore = await nextCookies(); // unwrap the Promise
 
-  return createServerClient(
+  return createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL as string,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string,
     {

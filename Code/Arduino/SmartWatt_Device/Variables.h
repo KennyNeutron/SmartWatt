@@ -1,5 +1,5 @@
 /* ====== WIFI CONFIG ====== */
-const char* WIFI_SSID     = "Innocore2.4G";
+const char* WIFI_SSID     = "KennyNeutron's IPhone";
 const char* WIFI_PASSWORD = "one2nine";
 
 /* ====== SUPABASE CONFIG (SMARTWATT) ====== */

@@ -5,7 +5,7 @@ bool WiFi_Connected_FirstTime = false;
 
 uint32_t LastWifi_CheckMS = 0;
 uint16_t WiFi_Check_IntervalMS = 9000;
-uint16_t WiFi_Connected_CountDown = 10000;
+uint16_t WiFi_Connected_CountDown = 6000;
 
 
 
@@ -28,7 +28,7 @@ void Display_WiFi() {
     u8g2.drawStr(0, 16, "WiFi: Disconnected");
     u8g2.drawStr(0, 32, "Connecting...");
     char buffer[9];
-    sprintf(buffer, "%lums", (millis() - LastWifi_CheckMS));
+    sprintf(buffer, "%lus", (millis() - LastWifi_CheckMS)/1000);
     u8g2.drawStr(0, 48, buffer);
 
     if (millis() - LastWifi_CheckMS > WiFi_Check_IntervalMS) {
@@ -47,11 +47,11 @@ void Display_WiFi() {
     u8g2.drawStr(0, 32, buffer);
 
     sprintf(buffer, "Exiting in"
-                    " %lums",
-            WiFi_Connected_CountDown - (millis() - LastWifi_CheckMS));
+                    " %lus",
+            (WiFi_Connected_CountDown - (millis() - LastWifi_CheckMS))/1000);
     u8g2.drawStr(0, 48, buffer);
 
-    if(WiFi_Connected_CountDown - (millis() - LastWifi_CheckMS)==0 || (millis() - LastWifi_CheckMS) > WiFi_Connected_CountDown) {
+    if((WiFi_Connected_CountDown - (millis() - LastWifi_CheckMS))/1000==0 || (millis() - LastWifi_CheckMS) > WiFi_Connected_CountDown) {
       Display_WiFi_Exit();
       CurrentScreen = NTP_Screen;
     }

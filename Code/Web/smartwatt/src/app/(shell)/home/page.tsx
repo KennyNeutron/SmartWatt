@@ -21,7 +21,7 @@ async function getPowerSnapshot(
   // 1) Find the first device assigned to this user
   const { data: device, error: deviceError } = await supabase
     .from("devices")
-    .select("id, hardware_id")
+    .select("id, manufacturer_id")
     .eq("owner_user_id", userId)
     .order("created_at", { ascending: true })
     .limit(1)
@@ -68,7 +68,7 @@ async function getPowerSnapshot(
   }
 
   return {
-    deviceId: device.hardware_id ?? String(device.id),
+    deviceId: device.manufacturer_id ?? String(device.id),
     gridUsageKwh,
     solarUsageKwh,
     currentSource,

@@ -3,29 +3,35 @@ bool Display_Home_Initialized = false;
 void Display_Home_Init() {
   Display_Home_Initialized = true;
 }
+
+bool CurrentPower = 0; // 0 = Grid, 1 = Solar
+float CurrentUsageW = 5.4;
+
 void Display_Home() {
   if (!Display_Home_Initialized) {
     Display_Home_Init();
   }
 
-
-
   u8g2.clearBuffer();
   u8g2.setFontPosTop();
   u8g2.setFont(u8g2_font_profont12_mr);
 
-  u8g2.drawStr(0, 0, "SMARTWATT DEVICE");
-
   char buffer[32];
-  sprintf(buffer, "Limit Enabled: %s", g_limitEnabled ? "Yes" : "No");
-  u8g2.drawStr(0, 16, buffer);
 
   sprintf(buffer, "Daily Limit: %.2f kWh", g_dailyLimitKwh);
+  u8g2.drawStr(0, 0, buffer);
+
+  sprintf(buffer, "Current: %s", CurrentPower ? "Solar" : "Grid");
+  u8g2.drawStr(0, 16, buffer);
+
+  sprintf(buffer, "Current Usage: %.2f W", CurrentUsageW);
   u8g2.drawStr(0, 32, buffer);
 
+  sprintf(buffer, "WiFi: %s", (WiFi.status() == WL_CONNECTED) ? "Connected" : "Disconnected");
+  u8g2.drawStr(0, 48, buffer);
 
   // Periodically refresh device configuration
-  if (millis() - lastConfigFetchMs > CONFIG_REFRESH_INTERVAL_MS) {
+  if (!g_hasConfig || millis() - lastConfigFetchMs > CONFIG_REFRESH_INTERVAL_MS) {
     if (fetchDeviceConfig()) {
       lastConfigFetchMs = millis();
     } else {
@@ -34,6 +40,8 @@ void Display_Home() {
   }
 }
 
+
+/* ====== DEVICE CONFIG FETCH ====== */
 
 bool fetchDeviceConfig() {
   if (WiFi.status() != WL_CONNECTED) {
@@ -55,7 +63,11 @@ bool fetchDeviceConfig() {
   //   &device_id=eq.<DEVICE_ID>
   //   &order=updated_at.desc
   //   &limit=1
-  String url = String(CONFIG_ENDPOINT_BASE) + "?select=daily_limit_kwh,limit_enabled" + "&device_id=eq." + DEVICE_ID + "&order=updated_at.desc&limit=1";
+  String url = String(CONFIG_ENDPOINT_BASE);
+  url += "?select=daily_limit_kwh,limit_enabled";
+  url += "&device_id=eq.";
+  url += DEVICE_ID;
+  url += "&order=updated_at.desc&limit=1";
 
   Serial.printf("GET %s\n", url.c_str());
 
