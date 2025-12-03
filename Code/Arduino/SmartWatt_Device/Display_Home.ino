@@ -36,7 +36,7 @@ void Display_Home() {
   sprintf(buffer, "Current: %s", CurrentPower ? "Solar" : "Grid");
   u8g2.drawStr(0, 16, buffer);
 
-  sprintf(buffer, "Current Usage: %.2f W", CurrentUsageW);
+  sprintf(buffer, "Usage: %.2f W", CurrentUsageW);
   u8g2.drawStr(0, 32, buffer);
 
   sprintf(buffer, "WiFi: %s", (WiFi.status() == WL_CONNECTED) ? "Connected" : "Disconnected");

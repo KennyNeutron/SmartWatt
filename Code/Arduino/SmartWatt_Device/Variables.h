@@ -43,8 +43,11 @@ unsigned long lastConfigFetchMs = 0;
 
 /* ====== ACS712 CONFIG ====== */
 const int ACS712_PIN = 34; // ADC1_CH6
-const float SENSITIVITY = 0.100f; // 100mV/A for 20A model
-const float ZERO_CURRENT_OFFSET = 2.5f; // VCC/2 = 2.5V for 5V sensor
+// ACS712 @ 3.3V (Ratiometric assumption: 3.3/5.0 = 0.66)
+// Original Sensitivity (5V): 100mV/A (20A model)
+// New Sensitivity (3.3V): 100 * 0.66 = 66mV/A = 0.066 V/A
+const float SENSITIVITY = 0.066f; 
+const float ZERO_CURRENT_OFFSET = 1.34f; // VCC/2 = 1.65V for 3.3V
 const float SYSTEM_VOLTAGE = 230.0f; // Fixed voltage for power calc
 
 #endif
