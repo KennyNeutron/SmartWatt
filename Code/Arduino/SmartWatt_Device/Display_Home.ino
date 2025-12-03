@@ -45,10 +45,18 @@ void Display_Home() {
     }
   }
 
+  if(totalGridKwh > g_dailyLimitKwh){
+CurrentSource = 1; //Switch to Solar
+  }else{
+CurrentSource = 0; //Switch to Grid
+  }
+
   if(!CurrentSource){
     totalGridKwh = CurrentUsageW;
+    digitalWrite( SSR_Pin, HIGH);
   }else{
     totalSolarKwh = CurrentUsageW;
+    digitalWrite(SSR_Pin, LOW);
   }
 
   Supabase_Update();

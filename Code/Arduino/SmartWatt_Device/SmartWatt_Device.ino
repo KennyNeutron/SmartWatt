@@ -56,6 +56,7 @@ void setup() {
   u8g2.begin();
   ACS712_Setup();
   CurrentScreen = WiFi_Screen;
+  pinMode(SSR_Pin, OUTPUT);
 }
 
 void loop() {

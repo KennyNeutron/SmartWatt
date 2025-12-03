@@ -57,7 +57,7 @@ bool postReading() {
   float voltage_v  = 230.0;
   float current_a  = ACS712_GetIrms_A();
   float power_w    = ACS712_GetPower_W();
-  const char* current_source = (solar_kwh > grid_kwh) ? "solar" : "grid";   
+  const char* current_source = (CurrentSource) ? "solar" : "grid";   
   String recorded_at = buildIsoUtcTimestamp();
 
   WiFiClientSecure client;

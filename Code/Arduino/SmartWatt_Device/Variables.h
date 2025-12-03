@@ -25,7 +25,7 @@ const char* SUPABASE_ANON_KEY =
 const char* DEVICE_ID = "8f05d9af-71ad-4b4b-a927-9fd9bc6fd337";
 
 /* ====== TIMING ====== */
-const unsigned long SEND_INTERVAL_MS = 10UL * 1000UL; // 10 seconds
+const unsigned long SEND_INTERVAL_MS = 60UL * 1000UL; // 10 seconds
 unsigned long lastSend = 0;
 
 /* ====== DEVICE CONFIG CACHE ====== */
@@ -40,6 +40,8 @@ unsigned long lastConfigFetchMs = 0;
 #define WiFi_Screen 0x1000
 #define NTP_Screen  0x2000
 #define Home_Screen 0x0000
+
+#define SSR_Pin 33
 
 /* ====== ACS712 CONFIG ====== */
 const int ACS_PIN = 34;              // ADC1 channel, input only
