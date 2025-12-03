@@ -42,12 +42,51 @@ unsigned long lastConfigFetchMs = 0;
 #define Home_Screen 0x0000
 
 /* ====== ACS712 CONFIG ====== */
-const int ACS712_PIN = 34; // ADC1_CH6
-// ACS712 @ 3.3V (Ratiometric assumption: 3.3/5.0 = 0.66)
-// Original Sensitivity (5V): 100mV/A (20A model)
-// New Sensitivity (3.3V): 100 * 0.66 = 66mV/A = 0.066 V/A
-const float SENSITIVITY = 0.066f; 
-const float ZERO_CURRENT_OFFSET = 1.34f; // VCC/2 = 1.65V for 3.3V
-const float SYSTEM_VOLTAGE = 230.0f; // Fixed voltage for power calc
+const int ACS_PIN = 34;              // ADC1 channel, input only
+
+// Number of samples for RMS calculation (higher = slower but smoother)
+const int NUM_SAMPLES_RMS = 1000;
+
+// ==== CONFIGURE THIS FOR YOUR SENSOR VERSION ====
+// 5A  module: 185.0
+// 20A module: 100.0
+// 30A module: 66.0
+const float SENSITIVITY_mV_PER_A = 100.0;  // mV per Amp (20A version by default)
+
+// ==== ADC CONFIG ====
+// ESP32: 12-bit ADC (0–4095)
+const float ADC_MAX = 4095.0;
+const float VREF    = 3.3;              // Adjust if you know your board's actual reference
+
+// ==== Voltage Divider (ACS712 OUT -> 470Ω -> ADC, ADC -> 1kΩ -> GND) ====
+// V_adc = V_sensor * DIVIDER_RATIO  where:
+// - R_TOP_OHMS is between ACS712 OUT and the ESP32 ADC pin
+// - R_BOTTOM_OHMS is between the ADC pin and GND
+const float R_TOP_OHMS    = 470.0f;      // between ACS712 OUT and ADC pin
+const float R_BOTTOM_OHMS = 1000.0f;     // between ADC pin and GND
+const float DIVIDER_RATIO = R_BOTTOM_OHMS / (R_TOP_OHMS + R_BOTTOM_OHMS);  // ~0.68
+
+// ==== MAINS & POWER FACTOR ====
+// Adjust these for your location and load.
+const float MAINS_VOLTAGE = 230.0;   // e.g. 220–230 V AC
+const float POWER_FACTOR  = 1.0;     // 1.0 for purely resistive, <1.0 for inductive loads
+
+// ==== STATE ====
+// Stored as "sensor voltage", not ADC pin voltage, because we reconstruct it.
+float zeroOffsetVoltage         = 0.0;   // V at 0A (measured at startup, ACS712 output)
+float lastMeasurementDuration_s = 0.0;
+
+float lastIrms_A   = 0.0;
+float lastPower_W  = 0.0;
+double totalEnergy_kWh = 0.0;        // accumulated energy since boot
+
+//HomePage
+bool CurrentSource = 0; // 0 = Grid, 1 = Solar
+float CurrentUsageW = 0.0;
+float CurrentUsageA = 0.0;
+
+float totalGridKwh = 0.0;
+float totalSolarKwh = 0.0;
+
 
 #endif

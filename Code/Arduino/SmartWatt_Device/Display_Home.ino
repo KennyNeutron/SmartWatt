@@ -4,8 +4,7 @@ void Display_Home_Init() {
   Display_Home_Initialized = true;
 }
 
-bool CurrentPower = 0; // 0 = Grid, 1 = Solar
-float CurrentUsageW = 5.4;
+
 
 void Display_Home() {
   if (!Display_Home_Initialized) {
@@ -13,16 +12,8 @@ void Display_Home() {
   }
 
   // Read Sensor
-  CurrentUsageW = ACS712_ReadPowerW();
-  // Simple threshold to decide if we are generating (Solar) or consuming (Grid)
-  // Since ACS712 is bidirectional, but we are calculating RMS (magnitude), we can't easily tell direction without voltage phase reference.
-  // For now, we assume "Grid" if consuming.
-  // If the user has a setup where Solar is injected, we might need direction.
-  // But without a voltage sensor for phase comparison, we can only measure Magnitude.
-  // So "CurrentPower" (Grid/Solar) might need to be inferred or manually set?
-  // The original code had `CurrentPower = 0; // 0 = Grid, 1 = Solar`.
-  // Let's assume it's always Grid for now unless we have logic to detect Solar.
-  CurrentPower = 0; 
+  CurrentUsageW = ACS712_GetTotalEnergy_kWh();
+  CurrentUsageA = ACS712_GetIrms_A(); 
 
   u8g2.clearBuffer();
   u8g2.setFontPosTop();
@@ -33,14 +24,17 @@ void Display_Home() {
   sprintf(buffer, "Daily Limit: %.2f kWh", g_dailyLimitKwh);
   u8g2.drawStr(0, 0, buffer);
 
-  sprintf(buffer, "Current: %s", CurrentPower ? "Solar" : "Grid");
+  sprintf(buffer, "Source: %s", CurrentSource ? "Solar" : "Grid");
   u8g2.drawStr(0, 16, buffer);
 
-  sprintf(buffer, "Usage: %.2f W", CurrentUsageW);
+  sprintf(buffer, "Usage: %.2f kWh", CurrentUsageW);
   u8g2.drawStr(0, 32, buffer);
 
-  sprintf(buffer, "WiFi: %s", (WiFi.status() == WL_CONNECTED) ? "Connected" : "Disconnected");
+  sprintf(buffer, "Current: %.2f A", CurrentUsageA);
   u8g2.drawStr(0, 48, buffer);
+
+  sprintf(buffer, "WiFi: %s", (WiFi.status() == WL_CONNECTED) ? "Connected" : "Disconnected");
+  u8g2.drawStr(0, 64, buffer);
 
   // Periodically refresh device configuration
   if (!g_hasConfig || millis() - lastConfigFetchMs > CONFIG_REFRESH_INTERVAL_MS) {
@@ -50,6 +44,14 @@ void Display_Home() {
       Serial.println("Warning: could not refresh device_config; keeping old values.");
     }
   }
+
+  if(!CurrentSource){
+    totalGridKwh = CurrentUsageW;
+  }else{
+    totalSolarKwh = CurrentUsageW;
+  }
+
+  Supabase_Update();
 }
 
 
