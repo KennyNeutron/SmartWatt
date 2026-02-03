@@ -106,7 +106,7 @@ void ACS712_Loop() {
   // lastMeasurementDuration_s is the time spent in readACIrms().
   // Only integrate if power is non-zero.
   if (realPower_W > 0.0f) {
-    double dt_hours = lastMeasurementDuration_s / 3600.0;
+    double dt_hours = lastMeasurementDuration_s / 1800.0;
     totalEnergy_kWh += (realPower_W * dt_hours);
   }
 
