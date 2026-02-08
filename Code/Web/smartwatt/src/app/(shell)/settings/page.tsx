@@ -7,10 +7,6 @@ import { useState, type FormEvent } from "react";
 type ChartRange = "24h" | "7d" | "30d";
 
 export default function SettingsPage() {
-  const [dailyLimitAlerts, setDailyLimitAlerts] = useState(true);
-  const [sourceChangeAlerts, setSourceChangeAlerts] = useState(true);
-  const [deviceOfflineAlerts, setDeviceOfflineAlerts] = useState(true);
-
   const [deviceLabel, setDeviceLabel] = useState("Main SmartWatt device");
   const [deviceLocation, setDeviceLocation] = useState("Ground floor panel");
 
@@ -50,42 +46,6 @@ export default function SettingsPage() {
       </header>
 
       <form onSubmit={handleSave} className="space-y-8">
-        {/* Notifications */}
-        <section className="rounded-3xl border border-smart-border bg-smart-surface p-6 md:p-8 space-y-4">
-          <header className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-smart-panel text-smart-primary">
-                <IconBell />
-              </span>
-              <h2 className="text-base font-semibold">Energy Alerts</h2>
-            </div>
-            <p className="text-sm text-smart-dim">
-              Receive notifications when SmartWatt detects important events.
-            </p>
-          </header>
-
-          <div className="space-y-3">
-            <ToggleRow
-              label="Daily limit warnings"
-              description="Notify me when my daily kWh limit is close to being reached."
-              enabled={dailyLimitAlerts}
-              onToggle={() => setDailyLimitAlerts((v) => !v)}
-            />
-            <ToggleRow
-              label="Power source changes"
-              description="Alert me when the system switches between grid, solar, or battery."
-              enabled={sourceChangeAlerts}
-              onToggle={() => setSourceChangeAlerts((v) => !v)}
-            />
-            <ToggleRow
-              label="Device offline alerts"
-              description="Warn me if my assigned SmartWatt device goes offline."
-              enabled={deviceOfflineAlerts}
-              onToggle={() => setDeviceOfflineAlerts((v) => !v)}
-            />
-          </div>
-        </section>
-
         {/* Device preferences */}
         <section className="rounded-3xl border border-smart-border bg-smart-surface p-6 md:p-8 space-y-4">
           <header className="space-y-1">
@@ -257,40 +217,6 @@ export default function SettingsPage() {
 
 /* Reusable pieces */
 
-type ToggleRowProps = {
-  label: string;
-  description: string;
-  enabled: boolean;
-  onToggle: () => void;
-};
-
-function ToggleRow({ label, description, enabled, onToggle }: ToggleRowProps) {
-  return (
-    <div className="flex items-start justify-between gap-4">
-      <div>
-        <div className="text-sm font-medium text-smart-muted">{label}</div>
-        <div className="text-xs text-smart-dim">{description}</div>
-      </div>
-      <button
-        type="button"
-        onClick={onToggle}
-        className={`relative inline-flex h-6 w-11 items-center rounded-full border transition ${
-          enabled
-            ? "border-smart-primary bg-smart-primary"
-            : "border-smart-border bg-smart-panel"
-        }`}
-        aria-pressed={enabled}
-      >
-        <span
-          className={`inline-block h-4 w-4 transform rounded-full bg-smart-fg transition ${
-            enabled ? "translate-x-5" : "translate-x-1"
-          }`}
-        />
-      </button>
-    </div>
-  );
-}
-
 type ChartRangeChipProps = {
   value: ChartRange;
   label: string;
@@ -334,23 +260,6 @@ function IconSettings() {
     >
       <circle cx="12" cy="12" r="3" />
       <path d="M19.4 15a1.78 1.78 0 0 0 .35 1.94l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.78 1.78 0 0 0 15 19.4a1.78 1.78 0 0 0-1 .6 1.78 1.78 0 0 0-.45 1.11V22a2 2 0 0 1-4 0v-.09a1.78 1.78 0 0 0-.45-1.11 1.78 1.78 0 0 0-1-.6 1.78 1.78 0 0 0-1.94.35l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.78 1.78 0 0 0 4.6 15a1.78 1.78 0 0 0-.6-1 1.78 1.78 0 0 0-1.11-.45H3a2 2 0 0 1 0-4h.09a1.78 1.78 0 0 0 1.11-.45 1.78 1.78 0 0 0 .6-1 1.78 1.78 0 0 0-.35-1.94l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.78 1.78 0 0 0 9 4.6a1.78 1.78 0 0 0 1-.6 1.78 1.78 0 0 0 .45-1.11V3a2 2 0 0 1 4 0v.09a1.78 1.78 0 0 0 .45 1.11 1.78 1.78 0 0 0 1 .6 1.78 1.78 0 0 0 1.94-.35l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.78 1.78 0 0 0 19.4 9a1.78 1.78 0 0 0 .6 1 1.78 1.78 0 0 0 1.11.45H21a2 2 0 0 1 0 4h-.09a1.78 1.78 0 0 0-1.11.45 1.78 1.78 0 0 0-.6 1z" />
-    </svg>
-  );
-}
-
-function IconBell() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className="h-4 w-4"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.7}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
-      <path d="M13.73 21a2 2 0 0 1-3.46 0" />
     </svg>
   );
 }
