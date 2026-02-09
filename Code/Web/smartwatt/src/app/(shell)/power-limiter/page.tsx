@@ -251,8 +251,8 @@ export default function PowerLimiterPage() {
               placeholder="Enter daily limit in kWh"
             />
             <div className="mt-1 flex justify-between text-xs text-smart-dim">
-              <span>Minimum: {MIN_LIMIT} kWh</span>
-              <span>Maximum: {MAX_LIMIT} kWh</span>
+              {/* <span>Minimum: {MIN_LIMIT} kWh</span>
+              <span>Maximum: {MAX_LIMIT} kWh</span> */}
             </div>
           </div>
 
