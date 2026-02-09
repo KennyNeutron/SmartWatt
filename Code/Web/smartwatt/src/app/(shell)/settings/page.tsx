@@ -3,6 +3,7 @@
 // File: /src/app/(shell)/settings/page.tsx
 
 import { useState, type FormEvent } from "react";
+import { createClient } from "@/src/lib/supabase/client";
 
 type ChartRange = "24h" | "7d" | "30d";
 
@@ -15,6 +16,15 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState<Date | null>(null);
 
+  // Password change state
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
+  const [updatingPassword, setUpdatingPassword] = useState(false);
+
+  const supabase = createClient();
+
   function handleSave(e: FormEvent) {
     e.preventDefault();
     setSaving(true);
@@ -24,6 +34,38 @@ export default function SettingsPage() {
       setSaving(false);
       setSavedAt(new Date());
     }, 600);
+  }
+
+  async function handleUpdatePassword(e: FormEvent) {
+    e.preventDefault();
+    setPasswordError(null);
+    setPasswordSuccess(null);
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError("Passwords do not match.");
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setPasswordError("Password must be at least 6 characters.");
+      return;
+    }
+
+    setUpdatingPassword(true);
+
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword,
+    });
+
+    setUpdatingPassword(false);
+
+    if (error) {
+      setPasswordError(error.message);
+    } else {
+      setPasswordSuccess("Password updated successfully.");
+      setNewPassword("");
+      setConfirmPassword("");
+    }
   }
 
   return (
@@ -184,6 +226,80 @@ export default function SettingsPage() {
           </div>
         </section>
 
+        {/* Security / Change Password */}
+        <section className="rounded-3xl border border-smart-border bg-smart-surface p-6 md:p-8 space-y-4">
+          <header className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-smart-panel text-smart-danger">
+                <IconLock />
+              </span>
+              <h2 className="text-base font-semibold">Security</h2>
+            </div>
+            <p className="text-sm text-smart-dim">
+              Update your account password to keep your account secure.
+            </p>
+          </header>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <label
+                htmlFor="new-password"
+                className="text-sm font-medium text-smart-muted"
+              >
+                New password
+              </label>
+              <input
+                id="new-password"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className="w-full rounded-xl border border-smart-border bg-smart-panel px-4 py-3 text-sm text-smart-fg outline-none placeholder:text-smart-dim/80 focus:border-smart-primary focus:ring-1 focus:ring-smart-primary"
+                placeholder="Enter new password"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label
+                htmlFor="confirm-password"
+                className="text-sm font-medium text-smart-muted"
+              >
+                Confirm password
+              </label>
+              <input
+                id="confirm-password"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="w-full rounded-xl border border-smart-border bg-smart-panel px-4 py-3 text-sm text-smart-fg outline-none placeholder:text-smart-dim/80 focus:border-smart-primary focus:ring-1 focus:ring-smart-primary"
+                placeholder="Confirm new password"
+              />
+            </div>
+          </div>
+
+          {passwordError && (
+            <div className="rounded-xl border border-smart-danger/50 bg-smart-danger/15 px-4 py-3 text-sm text-smart-danger">
+              {passwordError}
+            </div>
+          )}
+
+          {passwordSuccess && (
+            <div className="rounded-xl border border-green-500/50 bg-green-500/15 px-4 py-3 text-sm text-green-500">
+              {passwordSuccess}
+            </div>
+          )}
+
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={handleUpdatePassword}
+              disabled={updatingPassword}
+              className="inline-flex items-center gap-2 rounded-xl bg-smart-panel border border-smart-border px-4 py-2 text-sm font-medium text-smart-fg transition hover:bg-smart-border disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {updatingPassword ? "Updating..." : "Update password"}
+            </button>
+          </div>
+        </section>
+
         {/* Save bar */}
         <section className="flex flex-wrap items-center justify-between gap-3 border-t border-smart-border pt-4">
           <div className="text-xs text-smart-dim">
@@ -313,6 +429,23 @@ function IconTheme() {
       strokeLinejoin="round"
     >
       <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+    </svg>
+  );
+}
+
+function IconLock() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-4 w-4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.7}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
     </svg>
   );
 }

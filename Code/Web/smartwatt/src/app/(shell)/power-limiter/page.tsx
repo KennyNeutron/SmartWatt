@@ -5,8 +5,8 @@
 import { useState, useEffect, ChangeEvent, FormEvent } from "react";
 import { createClient } from "@/src/lib/supabase/client";
 
-const MIN_LIMIT = 1;
-const MAX_LIMIT = 15;
+const MIN_LIMIT = 0.5;
+const MAX_LIMIT = 1500;
 
 export default function PowerLimiterPage() {
   const [limitInput, setLimitInput] = useState<string>("8");
@@ -98,7 +98,7 @@ export default function PowerLimiterPage() {
 
           const clamped = Math.min(
             MAX_LIMIT,
-            Math.max(MIN_LIMIT, value || MIN_LIMIT)
+            Math.max(MIN_LIMIT, value || MIN_LIMIT),
           );
 
           setAppliedLimit(clamped);
@@ -226,8 +226,8 @@ export default function PowerLimiterPage() {
             <div>
               <h2 className="text-lg font-semibold">Daily Consumption Limit</h2>
               <p className="text-sm text-smart-dim">
-                Enter maximum daily energy consumption ({MIN_LIMIT} -{" "}
-                {MAX_LIMIT} kWh). Decimals are allowed.
+                {/* Enter maximum daily energy consumption ({MIN_LIMIT} -{" "}
+                {MAX_LIMIT} kWh). Decimals are allowed. */}
               </p>
             </div>
           </div>
