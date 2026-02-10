@@ -71,10 +71,7 @@ export default function MonthlyReportPage() {
         }
 
         // First device owned by this user
-        const {
-          data: device,
-          error: deviceError,
-        } = await supabase
+        const { data: device, error: deviceError } = await supabase
           .from("devices")
           .select("id")
           .eq("owner_user_id", user.id)
@@ -103,10 +100,7 @@ export default function MonthlyReportPage() {
         let dailyLimitKwh: number | null = null;
         let limitEnabled = false;
 
-        const {
-          data: configRows,
-          error: configError,
-        } = await supabase
+        const { data: configRows, error: configError } = await supabase
           .from("device_config")
           .select("daily_limit_kwh, limit_enabled")
           .eq("device_id", deviceId)
@@ -129,17 +123,17 @@ export default function MonthlyReportPage() {
         }
 
         // All readings for this device
-        const {
-          data: readings,
-          error: readingsError,
-        } = await supabase
+        const { data: readings, error: readingsError } = await supabase
           .from("device_readings")
           .select("grid_kwh, solar_kwh, recorded_at")
           .eq("device_id", deviceId)
           .order("recorded_at", { ascending: true });
 
         if (readingsError) {
-          console.error("Error loading device_readings:", readingsError.message);
+          console.error(
+            "Error loading device_readings:",
+            readingsError.message,
+          );
           if (isMounted) {
             setErrorMessage("Failed to load device readings.");
           }
@@ -181,7 +175,7 @@ export default function MonthlyReportPage() {
         // Max possible power (kW) to filter out glitches.
         // e.g. if delta is 10kWh in 1 minute, that's 600kW -> impossible for this device.
         // 20kW is a safe upper bound for a home sensor (ACS712 30A @ 230V ~ 7kW).
-        const MAX_POWER_KW = 10.0; 
+        const MAX_POWER_KW = 10.0;
 
         for (const row of readings as {
           grid_kwh: number | null;
@@ -223,26 +217,30 @@ export default function MonthlyReportPage() {
 
             // Sanity check: Calculate implied power
             const timeDiffHours = (time - prevTime) / 3600000.0; // ms to hours
-            
+
             // Avoid division by zero (shouldn't happen if timestamps are unique, but safety first)
             if (timeDiffHours > 0.000001) {
-               const impliedGridKw = rawDeltaGrid / timeDiffHours;
-               const impliedSolarKw = rawDeltaSolar / timeDiffHours;
+              const impliedGridKw = rawDeltaGrid / timeDiffHours;
+              const impliedSolarKw = rawDeltaSolar / timeDiffHours;
 
-               if (impliedGridKw < MAX_POWER_KW) {
-                 deltaGrid = rawDeltaGrid;
-               } else {
-                 // Glitch detected (huge jump), ignore this delta
-                 console.warn(`Ignored grid glitch: ${rawDeltaGrid.toFixed(2)} kWh in ${timeDiffHours.toFixed(4)} h (${impliedGridKw.toFixed(1)} kW)`);
-                 deltaGrid = 0;
-               }
+              if (impliedGridKw < MAX_POWER_KW) {
+                deltaGrid = rawDeltaGrid;
+              } else {
+                // Glitch detected (huge jump), ignore this delta
+                console.warn(
+                  `Ignored grid glitch: ${rawDeltaGrid.toFixed(2)} kWh in ${timeDiffHours.toFixed(4)} h (${impliedGridKw.toFixed(1)} kW)`,
+                );
+                deltaGrid = 0;
+              }
 
-               if (impliedSolarKw < MAX_POWER_KW) {
-                 deltaSolar = rawDeltaSolar;
-               } else {
-                 console.warn(`Ignored solar glitch: ${rawDeltaSolar.toFixed(2)} kWh in ${timeDiffHours.toFixed(4)} h (${impliedSolarKw.toFixed(1)} kW)`);
-                 deltaSolar = 0;
-               }
+              if (impliedSolarKw < MAX_POWER_KW) {
+                deltaSolar = rawDeltaSolar;
+              } else {
+                console.warn(
+                  `Ignored solar glitch: ${rawDeltaSolar.toFixed(2)} kWh in ${timeDiffHours.toFixed(4)} h (${impliedSolarKw.toFixed(1)} kW)`,
+                );
+                deltaSolar = 0;
+              }
             } else {
               // Duplicate timestamp or extremely close? Ignore delta to be safe.
               deltaGrid = 0;
@@ -295,7 +293,7 @@ export default function MonthlyReportPage() {
         for (const monthKey of monthKeys) {
           const bucket = monthBuckets[monthKey];
           const dayEntries = Object.entries(bucket.days).sort((a, b) =>
-            a[0].localeCompare(b[0])
+            a[0].localeCompare(b[0]),
           );
 
           const days: DailyRecord[] = dayEntries.map(([dayKey, values]) => {
@@ -329,23 +327,15 @@ export default function MonthlyReportPage() {
           const averageDailyKwh = totalKwh / dayCount;
 
           const solarPercent =
-            totalKwh > 0
-              ? Math.round((bucket.totalSolar / totalKwh) * 100)
-              : 0;
+            totalKwh > 0 ? Math.round((bucket.totalSolar / totalKwh) * 100) : 0;
           const gridPercent = 100 - solarPercent;
 
           const limitBreaches = days.filter((d) => d.overLimit).length;
 
-          const estimatedBill = Math.round(
-            totalKwh * ESTIMATED_RATE_PER_KWH
-          );
+          const estimatedBill = Math.round(totalKwh * ESTIMATED_RATE_PER_KWH);
 
           const [yearStr, monthStr] = monthKey.split("-");
-          const labelDate = new Date(
-            Number(yearStr),
-            Number(monthStr) - 1,
-            1
-          );
+          const labelDate = new Date(Number(yearStr), Number(monthStr) - 1, 1);
           const label = labelDate.toLocaleDateString("en-US", {
             month: "long",
             year: "numeric",
@@ -377,7 +367,7 @@ export default function MonthlyReportPage() {
           setSelectedMonth((prev) =>
             prev && newMonthData[prev]
               ? prev
-              : monthKeys[monthKeys.length - 1] || null
+              : monthKeys[monthKeys.length - 1] || null,
           );
         }
       } finally {
@@ -393,9 +383,7 @@ export default function MonthlyReportPage() {
   }, []);
 
   const current =
-    selectedMonth && monthData[selectedMonth]
-      ? monthData[selectedMonth]
-      : null;
+    selectedMonth && monthData[selectedMonth] ? monthData[selectedMonth] : null;
 
   const summary = current?.summary ?? null;
   const days = current?.days ?? [];
@@ -427,13 +415,11 @@ export default function MonthlyReportPage() {
               months={months}
               onChange={setSelectedMonth}
             />
-            <ExportButtons />
+            <ExportButtons summary={summary} days={days} />
           </div>
         </div>
 
-        {errorMessage && (
-          <p className="text-xs text-red-400">{errorMessage}</p>
-        )}
+        {errorMessage && <p className="text-xs text-red-400">{errorMessage}</p>}
       </header>
 
       {/* Summary cards */}
@@ -441,14 +427,10 @@ export default function MonthlyReportPage() {
         <SummaryCard
           icon={<IconKwh />}
           title="Total consumption"
-          value={
-            summary ? `${summary.totalKwh.toFixed(1)} kWh` : "0.0 kWh"
-          }
+          value={summary ? `${summary.totalKwh.toFixed(1)} kWh` : "0.0 kWh"}
           hint={
             summary
-              ? `${summary.averageDailyKwh.toFixed(
-                  1
-                )} kWh per day on average`
+              ? `${summary.averageDailyKwh.toFixed(1)} kWh per day on average`
               : "No data for this month yet."
           }
         />
@@ -458,10 +440,9 @@ export default function MonthlyReportPage() {
           value={summary ? `${summary.gridPercent}%` : "0%"}
           hint={
             summary
-              ? `${(
-                  summary.totalKwh *
-                  (summary.gridPercent / 100)
-                ).toFixed(1)} kWh from grid`
+              ? `${(summary.totalKwh * (summary.gridPercent / 100)).toFixed(
+                  1,
+                )} kWh from grid`
               : "No grid data for this month."
           }
         />
@@ -471,10 +452,9 @@ export default function MonthlyReportPage() {
           value={summary ? `${summary.solarPercent}%` : "0%"}
           hint={
             summary
-              ? `${(
-                  summary.totalKwh *
-                  (summary.solarPercent / 100)
-                ).toFixed(1)} kWh from solar`
+              ? `${(summary.totalKwh * (summary.solarPercent / 100)).toFixed(
+                  1,
+                )} kWh from solar`
               : "No solar data for this month."
           }
         />
@@ -536,16 +516,12 @@ export default function MonthlyReportPage() {
             <h2 className="text-base font-semibold">Estimated bill</h2>
           </div>
           <p className="text-3xl font-semibold">
-            ₱
-            {summary
-              ? summary.estimatedBill.toLocaleString("en-PH")
-              : "0"}
+            ₱{summary ? summary.estimatedBill.toLocaleString("en-PH") : "0"}
           </p>
           <p className="mt-2 text-sm text-smart-dim">
-            Estimated using a flat rate of ₱
-            {ESTIMATED_RATE_PER_KWH.toFixed(2)} per kWh based on your total
-            consumption. Adjust the tariff logic in the backend when actual
-            utility rates are available.
+            Estimated using a flat rate of ₱{ESTIMATED_RATE_PER_KWH.toFixed(2)}{" "}
+            per kWh based on your total consumption. Adjust the tariff logic in
+            the backend when actual utility rates are available.
           </p>
         </div>
       </section>
@@ -701,19 +677,144 @@ function MonthSelector({ selected, months, onChange }: MonthSelectorProps) {
   );
 }
 
-function ExportButtons() {
+type ExportButtonsProps = {
+  summary: MonthlySummary | null;
+  days: DailyRecord[];
+};
+
+function ExportButtons({ summary, days }: ExportButtonsProps) {
+  const handleExportCSV = () => {
+    if (!summary || days.length === 0) {
+      alert("No data to export.");
+      return;
+    }
+
+    const headers = [
+      "Date",
+      "Grid (kWh)",
+      "Solar (kWh)",
+      "Total (kWh)",
+      "Status",
+    ];
+    const rows = days.map((day) => {
+      const total = (day.gridKwh + day.solarKwh).toFixed(1);
+      const status = day.overLimit ? "Over Limit" : "Within Limit";
+      return [
+        day.dateISO,
+        day.gridKwh.toFixed(1),
+        day.solarKwh.toFixed(1),
+        total,
+        status,
+      ];
+    });
+
+    const csvContent =
+      "data:text/csv;charset=utf-8," +
+      [headers.join(","), ...rows.map((row) => row.join(","))].join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `monthly_report_${summary.monthKey}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleExportPDF = async () => {
+    if (!summary || days.length === 0) {
+      alert("No data to export.");
+      return;
+    }
+
+    try {
+      // Dynamically import jspdf and jspdf-autotable to avoid server-side issues
+      const jsPDF = (await import("jspdf")).default;
+      const autoTable = (await import("jspdf-autotable")).default;
+
+      const doc = new jsPDF();
+
+      // Title
+      doc.setFontSize(18);
+      doc.text("Monthly Energy Report", 14, 22);
+
+      doc.setFontSize(11);
+      doc.setTextColor(100);
+      doc.text(`Period: ${summary.label}`, 14, 28);
+
+      // Summary Section
+      doc.setFontSize(12);
+      doc.setTextColor(0);
+      doc.text("Summary", 14, 40);
+
+      doc.setFontSize(10);
+      doc.text(`Total Consumption: ${summary.totalKwh.toFixed(1)} kWh`, 14, 48);
+      doc.text(
+        `Grid Contribution: ${summary.gridPercent}% (${(summary.totalKwh * (summary.gridPercent / 100)).toFixed(1)} kWh)`,
+        14,
+        54,
+      );
+      doc.text(
+        `Solar Contribution: ${summary.solarPercent}% (${(summary.totalKwh * (summary.solarPercent / 100)).toFixed(1)} kWh)`,
+        14,
+        60,
+      );
+      doc.text(
+        `Estimated Bill: Php ${summary.estimatedBill.toLocaleString("en-PH")}`,
+        14,
+        66,
+      );
+      doc.text(`Limit Breaches: ${summary.limitBreaches} days`, 14, 72);
+
+      // Table
+      const tableColumn = [
+        "Date",
+        "Grid (kWh)",
+        "Solar (kWh)",
+        "Total (kWh)",
+        "Status",
+      ];
+      const tableRows = days.map((day) => {
+        const total = (day.gridKwh + day.solarKwh).toFixed(1);
+        return [
+          day.dateLabel,
+          day.gridKwh.toFixed(1),
+          day.solarKwh.toFixed(1),
+          total,
+          day.overLimit ? "Over Limit" : "OK",
+        ];
+      });
+
+      // @ts-ignore - jspdf-autotable types might not be perfectly resolved in all envs
+      autoTable(doc, {
+        head: [tableColumn],
+        body: tableRows,
+        startY: 80,
+      });
+
+      doc.save(`monthly_report_${summary.monthKey}.pdf`);
+    } catch (error) {
+      console.error("Failed to export PDF", error);
+      alert("Failed to confirm PDF export libraries.");
+    }
+  };
+
   return (
     <div className="flex flex-wrap items-center gap-2 text-xs">
       <button
         type="button"
-        className="inline-flex items-center gap-1 rounded-full border border-smart-border bg-smart-surface px-3 py-1.5 text-smart-muted hover:border-smart-primary hover:text-smart-primary"
+        onClick={handleExportCSV}
+        disabled={!summary}
+        className="inline-flex items-center gap-1 rounded-full border border-smart-border bg-smart-surface px-3 py-1.5 text-smart-muted hover:border-smart-primary hover:text-smart-primary disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <IconDownload />
         <span>Export CSV</span>
       </button>
       <button
         type="button"
-        className="inline-flex items-center gap-1 rounded-full border border-smart-border bg-smart-surface px-3 py-1.5 text-smart-muted hover:border-smart-primary hover:text-smart-primary"
+        onClick={handleExportPDF}
+        disabled={!summary}
+        className="inline-flex items-center gap-1 rounded-full border border-smart-border bg-smart-surface px-3 py-1.5 text-smart-muted hover:border-smart-primary hover:text-smart-primary disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <IconDownload />
         <span>Export PDF</span>

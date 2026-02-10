@@ -5,8 +5,8 @@
 import { useState, useEffect, ChangeEvent, FormEvent } from "react";
 import { createClient } from "@/src/lib/supabase/client";
 
-const MIN_LIMIT = 0.5;
-const MAX_LIMIT = 1500;
+const MIN_LIMIT = 0.1;
+const MAX_LIMIT = 99000;
 
 export default function PowerLimiterPage() {
   const [limitInput, setLimitInput] = useState<string>("8");
