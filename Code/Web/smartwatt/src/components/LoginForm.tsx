@@ -79,9 +79,17 @@ export default function LoginForm() {
 
       {/* Password */}
       <div className="space-y-2">
-        <label className="text-base font-medium text-smart-muted">
-          Password
-        </label>
+        <div className="flex items-center justify-between">
+          <label className="text-base font-medium text-smart-muted">
+            Password
+          </label>
+          <a
+            href="/forgot-password"
+            className="text-sm font-medium text-smart-primary hover:text-smart-accent hover:underline"
+          >
+            Forgot password?
+          </a>
+        </div>
         <div className="flex items-center gap-3">
           <div className="relative flex-1">
             {/* Lock icon */}
