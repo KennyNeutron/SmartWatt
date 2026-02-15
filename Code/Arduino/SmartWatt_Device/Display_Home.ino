@@ -30,7 +30,7 @@ void Display_Home() {
   sprintf(buffer, "Usage: %.2f kWh", CurrentUsageW);
   u8g2.drawStr(0, 32, buffer);
 
-  sprintf(buffer, "Current: %.2f A", CurrentUsageA);
+  sprintf(buffer, "Power: %.2f W", CurrentUsageA *230);
   u8g2.drawStr(0, 48, buffer);
 
   sprintf(buffer, "WiFi: %s", (WiFi.status() == WL_CONNECTED) ? "Connected" : "Disconnected");
