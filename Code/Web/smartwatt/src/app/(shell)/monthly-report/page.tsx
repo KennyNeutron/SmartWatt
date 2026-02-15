@@ -16,6 +16,7 @@ type MonthlySummary = {
   gridPercent: number;
   limitBreaches: number;
   estimatedBill: number;
+  ratePerKwh: number;
 };
 
 type DailyRecord = {
@@ -33,8 +34,6 @@ type MonthDataMap = Record<
     days: DailyRecord[];
   }
 >;
-
-const ESTIMATED_RATE_PER_KWH = 13.3;
 
 export default function MonthlyReportPage() {
   const [selectedMonth, setSelectedMonth] = useState<MonthKey | null>(null);
@@ -96,13 +95,14 @@ export default function MonthlyReportPage() {
 
         const deviceId: string = device.id;
 
-        // Current config for this device (daily limit)
+        // Current config for this device (daily limit & rate)
         let dailyLimitKwh: number | null = null;
         let limitEnabled = false;
+        let ratePerKwh = 0;
 
         const { data: configRows, error: configError } = await supabase
           .from("device_config")
-          .select("daily_limit_kwh, limit_enabled")
+          .select("daily_limit_kwh, limit_enabled, rate_per_kwh")
           .eq("device_id", deviceId)
           .order("updated_at", { ascending: false })
           .limit(1);
@@ -115,11 +115,15 @@ export default function MonthlyReportPage() {
           const cfg = configRows[0] as {
             daily_limit_kwh: number | null;
             limit_enabled: boolean | null;
+            rate_per_kwh: number | null;
           };
           if (typeof cfg.daily_limit_kwh === "number") {
             dailyLimitKwh = cfg.daily_limit_kwh;
           }
           limitEnabled = !!cfg.limit_enabled;
+          if (typeof cfg.rate_per_kwh === "number") {
+            ratePerKwh = cfg.rate_per_kwh;
+          }
         }
 
         // All readings for this device
@@ -332,7 +336,7 @@ export default function MonthlyReportPage() {
 
           const limitBreaches = days.filter((d) => d.overLimit).length;
 
-          const estimatedBill = Math.round(totalKwh * ESTIMATED_RATE_PER_KWH);
+          const estimatedBill = Math.round(totalKwh * ratePerKwh);
 
           const [yearStr, monthStr] = monthKey.split("-");
           const labelDate = new Date(Number(yearStr), Number(monthStr) - 1, 1);
@@ -351,6 +355,7 @@ export default function MonthlyReportPage() {
               gridPercent,
               limitBreaches,
               estimatedBill,
+              ratePerKwh, // Pass this down if needed for display
             },
             days,
           };
@@ -519,9 +524,9 @@ export default function MonthlyReportPage() {
             ₱{summary ? summary.estimatedBill.toLocaleString("en-PH") : "0"}
           </p>
           <p className="mt-2 text-sm text-smart-dim">
-            Estimated using a flat rate of ₱{ESTIMATED_RATE_PER_KWH.toFixed(2)}{" "}
-            per kWh based on your total consumption. Adjust the tariff logic in
-            the backend when actual utility rates are available.
+            Estimated using your configured rate of ₱
+            {summary ? summary.ratePerKwh.toFixed(2) : "0.00"} per kWh. You can
+            update this in Settings.
           </p>
         </div>
       </section>

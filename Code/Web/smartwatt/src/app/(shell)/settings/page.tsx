@@ -2,16 +2,13 @@
 
 // File: /src/app/(shell)/settings/page.tsx
 
-import { useState, type FormEvent } from "react";
+import { useState, useEffect, type FormEvent } from "react";
 import { createClient } from "@/src/lib/supabase/client";
-
-type ChartRange = "24h" | "7d" | "30d";
 
 export default function SettingsPage() {
   const [deviceLabel, setDeviceLabel] = useState("Main SmartWatt device");
   const [deviceLocation, setDeviceLocation] = useState("Ground floor panel");
-
-  const [chartRange, setChartRange] = useState<ChartRange>("24h");
+  const [ratePerKwh, setRatePerKwh] = useState("12.50"); // Default example rate
 
   const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState<Date | null>(null);
@@ -23,17 +20,127 @@ export default function SettingsPage() {
   const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
   const [updatingPassword, setUpdatingPassword] = useState(false);
 
+  const [loading, setLoading] = useState(true);
+
   const supabase = createClient();
 
-  function handleSave(e: FormEvent) {
+  // Fetch initial data
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        setLoading(true);
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (!user) return;
+
+        // Get user's device (assuming 1:1 for now based on UI copy)
+        const { data: devices, error: deviceError } = await supabase
+          .from("devices")
+          .select("id, label, location")
+          .eq("owner_user_id", user.id)
+          .single();
+
+        if (deviceError && deviceError.code !== "PGRST116") {
+          console.error("Error fetching device:", deviceError);
+        }
+
+        if (devices) {
+          setDeviceLabel(devices.label || "");
+          setDeviceLocation(devices.location || "");
+
+          // Fetch config for this device
+          const { data: config } = await supabase
+            .from("device_config")
+            .select("rate_per_kwh")
+            .eq("device_id", devices.id)
+            .single();
+
+          if (config?.rate_per_kwh) {
+            setRatePerKwh(config.rate_per_kwh.toString());
+          }
+        }
+      } catch (error) {
+        console.error("Error loading settings:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchData();
+  }, [supabase]);
+
+  async function handleSave(e: FormEvent) {
     e.preventDefault();
     setSaving(true);
+    setSavedAt(null);
 
-    // In a real app, persist to Supabase or your API here.
-    setTimeout(() => {
-      setSaving(false);
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) throw new Error("No user found");
+
+      // 1. Update/Get Device
+      // For simplicity, we assume the device exists. If not, we might need to create it, but that's likely part of onboarding.
+      // We'll search for the device first.
+      let { data: device } = await supabase
+        .from("devices")
+        .select("id")
+        .eq("owner_user_id", user.id)
+        .single();
+
+      if (!device) {
+        // Handle case where device doesn't exist?
+        // For now, let's assume it exists or we can't save config.
+        // Or maybe we just update if it exists.
+        console.warn("No device found for user, cannot save settings yet.");
+        // Potentially trigger a toast here
+      } else {
+        // Update device details
+        const { error: devError } = await supabase
+          .from("devices")
+          .update({
+            label: deviceLabel,
+            location: deviceLocation,
+          })
+          .eq("id", device.id);
+
+        if (devError) throw devError;
+
+        // Update config
+        // Check if config exists
+        const { data: existingConfig } = await supabase
+          .from("device_config")
+          .select("id")
+          .eq("device_id", device.id)
+          .single();
+
+        if (existingConfig) {
+          await supabase
+            .from("device_config")
+            .update({
+              rate_per_kwh: parseFloat(ratePerKwh) || 0,
+            })
+            .eq("id", existingConfig.id);
+        } else {
+          // Insert new config
+          await supabase.from("device_config").insert({
+            device_id: device.id,
+            daily_limit_kwh: 0, // Default
+            rate_per_kwh: parseFloat(ratePerKwh) || 0,
+          });
+        }
+      }
+
       setSavedAt(new Date());
-    }, 600);
+    } catch (error) {
+      console.error("Error saving settings:", error);
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function handleUpdatePassword(e: FormEvent) {
@@ -144,84 +251,47 @@ export default function SettingsPage() {
           </p>
         </section>
 
-        {/* Dashboard preferences */}
+        {/* Energy Costs */}
         <section className="rounded-3xl border border-smart-border bg-smart-surface p-6 md:p-8 space-y-4">
           <header className="space-y-1">
             <div className="flex items-center gap-2">
-              <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-smart-panel text-smart-primary">
-                <IconDisplay />
+              <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-smart-panel text-smart-accent">
+                <IconCurrency />
               </span>
-              <h2 className="text-base font-semibold">Dashboard Preferences</h2>
+              <h2 className="text-base font-semibold">Energy Costs</h2>
             </div>
             <p className="text-sm text-smart-dim">
-              Control how energy data is summarized on the main dashboard.
+              Set your electricity rate to calculate estimated costs.
             </p>
           </header>
 
-          <div className="grid gap-6 md:grid-cols-2">
-            {/* Chart range */}
+          <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <h3 className="text-sm font-medium text-smart-muted">
-                Default chart range
-              </h3>
+              <label
+                htmlFor="rate-per-kwh"
+                className="text-sm font-medium text-smart-muted"
+              >
+                Rate per kWh
+              </label>
+              <div className="relative">
+                <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-smart-dim">
+                  ₱
+                </span>
+                <input
+                  id="rate-per-kwh"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={ratePerKwh}
+                  onChange={(e) => setRatePerKwh(e.target.value)}
+                  className="w-full rounded-xl border border-smart-border bg-smart-panel px-4 py-3 pl-8 text-sm text-smart-fg outline-none placeholder:text-smart-dim/80 focus:border-smart-primary focus:ring-1 focus:ring-smart-primary"
+                  placeholder="0.00"
+                />
+              </div>
               <p className="text-xs text-smart-dim">
-                Choose the time window SmartWatt uses when opening the
-                dashboard.
+                This rate will be used to estimate your daily and monthly
+                spending.
               </p>
-              <div className="mt-3 inline-flex rounded-full border border-smart-border bg-smart-panel p-1">
-                <ChartRangeChip
-                  value="24h"
-                  label="Last 24 hours"
-                  active={chartRange === "24h"}
-                  onSelect={setChartRange}
-                />
-                <ChartRangeChip
-                  value="7d"
-                  label="Last 7 days"
-                  active={chartRange === "7d"}
-                  onSelect={setChartRange}
-                />
-                <ChartRangeChip
-                  value="30d"
-                  label="Last 30 days"
-                  active={chartRange === "30d"}
-                  onSelect={setChartRange}
-                />
-              </div>
-            </div>
-
-            {/* Units and theme, mostly informative for now */}
-            <div className="space-y-3">
-              <div className="space-y-1">
-                <h3 className="text-sm font-medium text-smart-muted">
-                  Energy units
-                </h3>
-                <p className="text-xs text-smart-dim">
-                  SmartWatt currently reports consumption in kilowatt-hours.
-                </p>
-                <div className="mt-2 inline-flex items-center rounded-full border border-smart-border bg-smart-panel px-3 py-1.5 text-xs text-smart-muted">
-                  <span className="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-smart-surface text-smart-primary">
-                    kWh
-                  </span>
-                  <span>Standard unit for energy billing</span>
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <h3 className="text-sm font-medium text-smart-muted">
-                  Interface theme
-                </h3>
-                <p className="text-xs text-smart-dim">
-                  SmartWatt uses a focused dark interface for better readability
-                  of energy charts.
-                </p>
-                <div className="mt-2 inline-flex items-center rounded-full border border-smart-border bg-smart-panel px-3 py-1.5 text-xs text-smart-muted">
-                  <span className="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-smart-surface text-smart-accent">
-                    <IconTheme />
-                  </span>
-                  <span>SmartWatt Dark (default)</span>
-                </div>
-              </div>
             </div>
           </div>
         </section>
@@ -333,34 +403,6 @@ export default function SettingsPage() {
 
 /* Reusable pieces */
 
-type ChartRangeChipProps = {
-  value: ChartRange;
-  label: string;
-  active: boolean;
-  onSelect: (value: ChartRange) => void;
-};
-
-function ChartRangeChip({
-  value,
-  label,
-  active,
-  onSelect,
-}: ChartRangeChipProps) {
-  return (
-    <button
-      type="button"
-      onClick={() => onSelect(value)}
-      className={`whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium transition ${
-        active
-          ? "bg-smart-primary text-smart-fg"
-          : "text-smart-dim hover:text-smart-muted"
-      }`}
-    >
-      {label}
-    </button>
-  );
-}
-
 /* Icons */
 
 function IconSettings() {
@@ -398,41 +440,6 @@ function IconDevice() {
   );
 }
 
-function IconDisplay() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className="h-4 w-4"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.7}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <rect x="3" y="4" width="18" height="12" rx="2" />
-      <path d="M7 20h10" />
-      <path d="M9 16v4" />
-      <path d="M15 16v4" />
-    </svg>
-  );
-}
-
-function IconTheme() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className="h-4 w-4"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.7}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-    </svg>
-  );
-}
-
 function IconLock() {
   return (
     <svg
@@ -446,6 +453,23 @@ function IconLock() {
     >
       <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
       <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+    </svg>
+  );
+}
+
+function IconCurrency() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-4 w-4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.7}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <line x1="12" y1="1" x2="12" y2="23"></line>
+      <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
     </svg>
   );
 }
