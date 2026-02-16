@@ -41,12 +41,12 @@ void Supabase_Update() {
   }
 }
 
-String buildIsoUtcTimestamp() {
+String buildIsoLocalTimestamp() {
   time_t now = time(nullptr);
-  struct tm tm_utc;
-  gmtime_r(&now, &tm_utc);
+  struct tm tm_local;
+  localtime_r(&now, &tm_local);
   char buf[32];
-  strftime(buf, sizeof(buf), "%Y-%m-%dT%H:%M:%SZ", &tm_utc);
+  strftime(buf, sizeof(buf), "%Y-%m-%dT%H:%M:%S+08:00", &tm_local);
   return String(buf);
 }
 
@@ -58,7 +58,7 @@ bool postReading() {
   float current_a  = ACS712_GetIrms_A();
   float power_w    = ACS712_GetPower_W();
   const char* current_source = (CurrentSource) ? "solar" : "grid";   
-  String recorded_at = buildIsoUtcTimestamp();
+  String recorded_at = buildIsoLocalTimestamp();
 
   WiFiClientSecure client;
   client.setInsecure();              // dev only – replace with proper CA in production

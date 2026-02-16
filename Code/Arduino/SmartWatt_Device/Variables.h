@@ -25,6 +25,10 @@ const char* SUPABASE_ANON_KEY =
 const char* DEVICE_ID = "4f66ac59-eb16-48aa-84a2-c2fad166ef4e";
 
 /* ====== TIMING ====== */
+// Philippines is UTC+8, no DST
+const char* NTP_SERVER          = "pool.ntp.org";
+const long  GMT_OFFSET_SEC      = 8 * 3600;
+const int   DAYLIGHT_OFFSET_SEC = 0;
 const unsigned long SEND_INTERVAL_MS = 60UL * 1000UL; // 60 seconds
 unsigned long lastSend = 0;
 

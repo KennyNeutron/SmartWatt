@@ -2,9 +2,6 @@ bool Display_NTP_Initialized = false;
 
 // ===== Time / NTP config =====
 // Philippines is UTC+8, no DST
-static const char* NTP_SERVER          = "pool.ntp.org";
-static const long  GMT_OFFSET_SEC      = 8 * 3600;
-static const int   DAYLIGHT_OFFSET_SEC = 0;
 
 bool timeSynced         = false;
 bool lastWifiConnected  = false;
