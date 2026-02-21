@@ -133,3 +133,7 @@ float ACS712_GetIrms_A() {
 float ACS712_GetPower_W() {
   return lastPower_W;
 }
+
+void ACS712_ResetEnergy() {
+  totalEnergy_kWh = 0.0;
+}

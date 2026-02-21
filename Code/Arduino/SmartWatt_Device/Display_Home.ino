@@ -15,6 +15,18 @@ void Display_Home() {
   CurrentUsageW = ACS712_GetTotalEnergy_kWh();
   CurrentUsageA = ACS712_GetIrms_A(); 
 
+  // Check for Midnight Reset
+  struct tm timeinfo;
+  if (getLocalTime(&timeinfo)) {
+    if (g_lastResetDay != timeinfo.tm_mday) {
+      Serial.println("Midnight Reset Triggered!");
+      ACS712_ResetEnergy();
+      totalGridKwh = 0.0;
+      totalSolarKwh = 0.0;
+      g_lastResetDay = timeinfo.tm_mday;
+    }
+  }
+
   u8g2.clearBuffer();
   u8g2.setFontPosTop();
   u8g2.setFont(u8g2_font_profont12_mr);

@@ -93,6 +93,7 @@ float CurrentUsageA = 0.0;
 
 float totalGridKwh = 0.0;
 float totalSolarKwh = 0.0;
+int g_lastResetDay = -1;  // Tracks the last day (1-31) a reset occurred
 
 
 #endif
