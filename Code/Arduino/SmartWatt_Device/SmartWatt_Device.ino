@@ -52,12 +52,21 @@ void setup() {
   Serial.begin(115200);
   Serial.println("SmartWatt Device Starting...");
 
+
+
   u8g2.begin();
+
   ACS712_Setup();
-  CurrentScreen = WiFi_Screen;
+
+
   pinMode(SSR_Pin, OUTPUT);
   pinMode(ReedSwitch_Normal, INPUT_PULLUP);
   pinMode(ReedSwitch_Reserve, INPUT_PULLUP);
+
+  CurrentScreen = WiFi_Screen;
+  // u8g2.drawStr(0, 16, "WiFi: Disconnected");
+  // u8g2.drawStr(0, 32, "Connecting...");
+  // u8g2.sendBuffer();
 }
 
 void loop() {

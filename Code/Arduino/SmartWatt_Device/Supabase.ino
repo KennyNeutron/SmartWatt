@@ -25,6 +25,7 @@ void Supabase_Update() {
     Serial.println("WiFi dropped, reconnecting...");
     WiFi.reconnect();
     unsigned long start = millis();
+
     while (WiFi.status() != WL_CONNECTED && millis() - start < 15000) {
       delay(300);
       Serial.print(".");
@@ -70,7 +71,7 @@ bool postReading() {
   if (getStatus_ReedSwitch_Reserve() && !getStatus_ReedSwitch_Normal() && !CurrentSource) {
     CurrentSource_toRecord = true;
   }
-  
+
   const char* current_source = (CurrentSource_toRecord) ? "solar" : "grid";
 
   WiFiClientSecure client;
