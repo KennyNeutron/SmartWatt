@@ -20,7 +20,7 @@ interface PowerSnapshot {
 
 async function getPowerSnapshot(
   supabase: SupabaseClient,
-  userId: string
+  userId: string,
 ): Promise<PowerSnapshot> {
   // 1) Find the first device assigned to this user
   const { data: device, error: deviceError } = await supabase
@@ -53,7 +53,7 @@ async function getPowerSnapshot(
   const { data: latestReading, error: readingsError } = await supabase
     .from("device_readings")
     .select(
-      "grid_kwh, solar_kwh, current_source, voltage_v, current_a, power_w, recorded_at"
+      "grid_kwh, solar_kwh, current_source, voltage_v, current_a, power_w, recorded_at",
     )
     .eq("device_id", device.id)
     .order("recorded_at", { ascending: false })
@@ -64,9 +64,7 @@ async function getPowerSnapshot(
     console.error("Error fetching device_readings:", readingsError.message);
   }
 
-  const gridUsageKwh = latestReading
-    ? Number(latestReading.grid_kwh ?? 0)
-    : 0;
+  const gridUsageKwh = latestReading ? Number(latestReading.grid_kwh ?? 0) : 0;
   const solarUsageKwh = latestReading
     ? Number(latestReading.solar_kwh ?? 0)
     : 0;
@@ -304,7 +302,9 @@ export default async function DashboardPage() {
               {recordedAt && (
                 <p className="text-xs text-smart-dim">
                   Recorded at{" "}
-                  {new Date(recordedAt).toLocaleString()}
+                  {new Date(recordedAt).toLocaleString("en-PH", {
+                    timeZone: "Asia/Manila",
+                  })}
                 </p>
               )}
             </div>
