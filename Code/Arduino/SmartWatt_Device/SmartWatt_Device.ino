@@ -4,14 +4,7 @@
   Author:                
   Date Started:          2025-11-27
   Pin Usage:
-    NRF24L01:
-      CE    - GPIO4
-      CSN   - GPIO5
-      SCK   - GPIO18
-      MOSI  - GPIO23
-      MISO  - GPIO19
-      VCC   - 3.3V
-      GND   - GND
+  
   Board Settings:
     Board:                     ESP32 Dev Module
     Port:                      COM3
@@ -50,7 +43,10 @@
 U8G2_SH1106_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, /* reset=*/U8X8_PIN_NONE);
 
 uint32_t CurrentScreen = 0x0000;
-unsigned long lastSupabaseMs = 0;  
+unsigned long lastSupabaseMs = 0;
+
+#define ReedSwitch_Normal 18
+#define ReedSwitch_Reserve 19
 
 void setup() {
   Serial.begin(115200);
@@ -60,6 +56,8 @@ void setup() {
   ACS712_Setup();
   CurrentScreen = WiFi_Screen;
   pinMode(SSR_Pin, OUTPUT);
+  pinMode(ReedSwitch_Normal, INPUT_PULLUP);
+  pinMode(ReedSwitch_Reserve, INPUT_PULLUP);
 }
 
 void loop() {
@@ -67,16 +65,36 @@ void loop() {
   Display_Main();
 
   if (millis() - lastSupabaseMs > 5000) {  // every 5 sec
-      Supabase_Update();
-      lastSupabaseMs = millis();
+    Supabase_Update();
+    lastSupabaseMs = millis();
   }
 
-     // ----------- Periodic Supabase config fetch -----------
-    if (!g_hasConfig || millis() - lastConfigFetchMs > CONFIG_REFRESH_INTERVAL_MS) {
-        if (fetchDeviceConfig()) {
-            lastConfigFetchMs = millis();
-        } else {
-            Serial.println("Warning: could not refresh device_config; keeping old values.");
-        }
+  // ----------- Periodic Supabase config fetch -----------
+  if (!g_hasConfig || millis() - lastConfigFetchMs > CONFIG_REFRESH_INTERVAL_MS) {
+    if (fetchDeviceConfig()) {
+      lastConfigFetchMs = millis();
+    } else {
+      Serial.println("Warning: could not refresh device_config; keeping old values.");
     }
+  }
+
+  // Serial.println("CurrentSource:" + String(CurrentSource));
+  // Serial.println("ReedN: " + String(getStatus_ReedSwitch_Normal()));
+  // Serial.println("ReedR: " + String(getStatus_ReedSwitch_Reserve()));
+}
+
+bool getStatus_ReedSwitch_Normal() {
+  if (!digitalRead(ReedSwitch_Normal)) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+bool getStatus_ReedSwitch_Reserve() {
+  if (!digitalRead(ReedSwitch_Reserve)) {
+    return true;
+  } else {
+    return false;
+  }
 }

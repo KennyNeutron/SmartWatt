@@ -4,8 +4,8 @@
 #include <Arduino.h>
 
 /* ====== WIFI CONFIG ====== */
-const char* WIFI_SSID     = "220300";
-const char* WIFI_PASSWORD = "20001998";
+const char* WIFI_SSID     = "Innocore2.4G";
+const char* WIFI_PASSWORD = "one2nine";
 
 /* ====== SUPABASE CONFIG (SMARTWATT) ====== */
 // REST endpoint for device_readings

@@ -35,8 +35,7 @@ void Supabase_Update() {
   unsigned long now = millis();
 
   // Periodically refresh device configuration
-  if (WiFi.status() == WL_CONNECTED &&
-      (lastConfigFetchMs == 0 || now - lastConfigFetchMs >= CONFIG_REFRESH_INTERVAL_MS)) {
+  if (WiFi.status() == WL_CONNECTED && (lastConfigFetchMs == 0 || now - lastConfigFetchMs >= CONFIG_REFRESH_INTERVAL_MS)) {
     if (fetchDeviceConfig()) {
       lastConfigFetchMs = now;
     }
@@ -58,16 +57,24 @@ String buildIsoLocalTimestamp() {
 }
 
 bool postReading() {
-  float grid_kwh   = totalGridKwh;
-  float solar_kwh  = totalSolarKwh;
-  float voltage_v  = 230.0;
-  float current_a  = ACS712_GetIrms_A();
-  float power_w    = ACS712_GetPower_W();
-  const char* current_source = (CurrentSource) ? "solar" : "grid";   
+  float grid_kwh = totalGridKwh;
+  float solar_kwh = totalSolarKwh;
+  float voltage_v = 230.0;
+  float current_a = ACS712_GetIrms_A();
+  float power_w = ACS712_GetPower_W();
   String recorded_at = buildIsoLocalTimestamp();
 
+
+  //Grid Brownout
+  bool CurrentSource_toRecord = false;
+  if (getStatus_ReedSwitch_Reserve() && !getStatus_ReedSwitch_Normal() && !CurrentSource) {
+    CurrentSource_toRecord = true;
+  }
+  
+  const char* current_source = (CurrentSource_toRecord) ? "solar" : "grid";
+
   WiFiClientSecure client;
-  client.setInsecure();              
+  client.setInsecure();
   client.setHandshakeTimeout(15000);
   client.setTimeout(15000);
 
@@ -87,14 +94,14 @@ bool postReading() {
   http.addHeader("Prefer", "return=representation");
 
   StaticJsonDocument<256> doc;
-  doc["device_id"]       = DEVICE_ID;
-  doc["grid_kwh"]        = grid_kwh;
-  doc["solar_kwh"]       = solar_kwh;
-  doc["voltage_v"]       = voltage_v;
-  doc["current_a"]       = current_a;
-  doc["power_w"]         = power_w;
-  doc["current_source"]  = current_source;
-  doc["recorded_at"]     = recorded_at;
+  doc["device_id"] = DEVICE_ID;
+  doc["grid_kwh"] = grid_kwh;
+  doc["solar_kwh"] = solar_kwh;
+  doc["voltage_v"] = voltage_v;
+  doc["current_a"] = current_a;
+  doc["power_w"] = power_w;
+  doc["current_source"] = current_source;
+  doc["recorded_at"] = recorded_at;
 
   String payload;
   serializeJson(doc, payload);
@@ -123,7 +130,7 @@ bool fetchDeviceConfig() {
   }
 
   WiFiClientSecure client;
-  client.setInsecure();  
+  client.setInsecure();
   client.setHandshakeTimeout(15000);
   client.setTimeout(15000);
 
@@ -196,5 +203,5 @@ void printTlsLastError(WiFiClientSecure& client) {
   char buf[128];
   int err = client.lastError(buf, sizeof(buf));
   if (err) Serial.printf("TLS lastError(%d): %s\n", err, buf);
-  else    Serial.println("TLS lastError: none reported");
+  else Serial.println("TLS lastError: none reported");
 }
