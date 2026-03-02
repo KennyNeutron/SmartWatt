@@ -107,7 +107,7 @@ void ACS712_Loop() {
   // Only integrate if power is non-zero.
   if (realPower_W > 0.0f) {
     double dt_hours = lastMeasurementDuration_s / 1800.0;
-    totalEnergy_kWh += (realPower_W * dt_hours);
+    totalEnergy_kWh += (realPower_W * dt_hours) / 1000 ;   // W → kW
   }
 
   // Print results (Irms shown with 1 decimal place)
@@ -132,8 +132,4 @@ float ACS712_GetIrms_A() {
 
 float ACS712_GetPower_W() {
   return lastPower_W;
-}
-
-void ACS712_ResetEnergy() {
-  totalEnergy_kWh = 0.0;
 }

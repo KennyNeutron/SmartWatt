@@ -1,187 +1,126 @@
+#include "Variables.h"
+#include <WiFi.h>
+#include <U8g2lib.h>
+#include <time.h>
+#include "ACS712.h"
+#include <HTTPClient.h>
+#include <WiFiClientSecure.h>
+#include <ArduinoJson.h>
+
+// ---------- OLED setup ----------
+extern U8G2_SH1106_128X64_NONAME_F_HW_I2C u8g2;
+
+// ---------- Test Reset Configuration ----------
+const int RESET_HOUR = 0;       // Normal midnight reset
+const int RESET_MINUTE = 0;
+
+const int TEST_RESET_HOUR = 11;    // Test hour (9 PM)
+const int TEST_RESET_MINUTE = 0;  // Test minute (9:20 PM)
+bool useTestReset = false;  // now uses normal midnight reset
+
+// ---------- Initialization ----------
 bool Display_Home_Initialized = false;
+int g_lastResetDay = -1;
+static float lastTotalEnergy_kWh = 0.0; // track delta energy
 
+unsigned long lastSerialMs = 0; // for 1-second interval
+
+// ---------- Display Init ----------
 void Display_Home_Init() {
-  Display_Home_Initialized = true;
+    Display_Home_Initialized = true;
 }
-
-
 
 void Display_Home() {
-  if (!Display_Home_Initialized) {
-    Display_Home_Init();
-  }
+    if (!Display_Home_Initialized) Display_Home_Init();
 
-  // Read Sensor
-  CurrentUsageW = ACS712_GetTotalEnergy_kWh();
-  CurrentUsageA = ACS712_GetIrms_A(); 
+    // ----------- Read ACS712 sensor -----------
+    float energyNow_kWh = ACS712_GetTotalEnergy_kWh();
+    float currentA = ACS712_GetIrms_A();
+    CurrentUsageW = energyNow_kWh;
+    CurrentUsageA = currentA;
 
-  // Check for Midnight Reset
-  struct tm timeinfo;
-  if (getLocalTime(&timeinfo)) {
-    if (g_lastResetDay != timeinfo.tm_mday) {
-      Serial.println("Midnight Reset Triggered!");
-      ACS712_ResetEnergy();
-      totalGridKwh = 0.0;
-      totalSolarKwh = 0.0;
-      g_lastResetDay = timeinfo.tm_mday;
-    }
-  }
+    // ----------- Delta-based per-source accumulation -----------
+    float deltaEnergy = energyNow_kWh - lastTotalEnergy_kWh;
 
-  u8g2.clearBuffer();
-  u8g2.setFontPosTop();
-  u8g2.setFont(u8g2_font_profont12_mr);
+    // Prevent negative delta (caused by resets or sensor calibration)
+    if (deltaEnergy < 0) deltaEnergy = 0;
 
-  char buffer[32];
-
-  sprintf(buffer, "Daily Limit: %.2f kWh", g_dailyLimitKwh);
-  u8g2.drawStr(0, 0, buffer);
-
-  sprintf(buffer, "Source: %s", CurrentSource ? "Solar" : "Grid");
-  u8g2.drawStr(0, 16, buffer);
-
-  sprintf(buffer, "Usage: %.2f kWh", CurrentUsageW);
-  u8g2.drawStr(0, 32, buffer);
-
-  sprintf(buffer, "Power: %.2f W", CurrentUsageA *230);
-  u8g2.drawStr(0, 48, buffer);
-
-  sprintf(buffer, "WiFi: %s", (WiFi.status() == WL_CONNECTED) ? "Connected" : "Disconnected");
-  u8g2.drawStr(0, 64, buffer);
-
-  // Periodically refresh device configuration
-  if (!g_hasConfig || millis() - lastConfigFetchMs > CONFIG_REFRESH_INTERVAL_MS) {
-    if (fetchDeviceConfig()) {
-      lastConfigFetchMs = millis();
+    if (!CurrentSource) {
+        totalGridKwh += deltaEnergy;
     } else {
-      Serial.println("Warning: could not refresh device_config; keeping old values.");
+        totalSolarKwh += deltaEnergy;
     }
-  }
+    lastTotalEnergy_kWh = energyNow_kWh;
 
-  if(totalGridKwh > g_dailyLimitKwh){
-CurrentSource = 1; //Switch to Solar
-  }else{
-CurrentSource = 0; //Switch to Grid
-  }
+    // ----------- Get current time -----------
+    struct tm timeinfo;
+    if (!getLocalTime(&timeinfo)) return; // skip if time not ready
 
-  if(!CurrentSource){
-    totalGridKwh = CurrentUsageW;
-    digitalWrite( SSR_Pin, HIGH);
-  }else{
-    totalSolarKwh = CurrentUsageW;
-    digitalWrite(SSR_Pin, LOW);
-  }
+    int targetHour = useTestReset ? TEST_RESET_HOUR : RESET_HOUR;
+    int targetMinute = useTestReset ? TEST_RESET_MINUTE : RESET_MINUTE;
 
-  Supabase_Update();
-}
+    // ----------- 1-second Serial Monitor update -----------
+    if (millis() - lastSerialMs >= 1000) { // every 1 second
+        lastSerialMs = millis();
+        Serial.printf("Current Time: %02d:%02d:%02d | Total Grid: %.3f kWh | Total Solar: %.3f kWh\n",
+                      timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec,
+                      totalGridKwh, totalSolarKwh, deltaEnergy);
+    }
 
+    // ----------- Midnight/Test reset -----------
+    if (g_lastResetDay != timeinfo.tm_mday &&
+        timeinfo.tm_hour == targetHour &&
+        timeinfo.tm_min >= targetMinute) {
 
-/* ====== DEVICE CONFIG FETCH ====== */
+        Serial.println("Midnight/Test Reset Triggered!");
 
-bool fetchDeviceConfig() {
-  if (WiFi.status() != WL_CONNECTED) {
-    Serial.println("fetchDeviceConfig: WiFi not connected");
-    return false;
-  }
+        totalEnergy_kWh = 0.0;
+        totalGridKwh = 0.0;
+        totalSolarKwh = 0.0;
 
-  WiFiClientSecure client;
-  client.setInsecure();  // development only; use CA in production
-  client.setHandshakeTimeout(15000);
-  client.setTimeout(15000);
+        g_lastResetDay = timeinfo.tm_mday;
 
-  HTTPClient http;
-  http.setConnectTimeout(15000);
+        // Optional: recalibrate ACS712 zero offset
+        ACS712_Setup();
 
-  // Build URL:
-  // /rest/v1/device_config
-  //   ?select=daily_limit_kwh,limit_enabled
-  //   &device_id=eq.<DEVICE_ID>
-  //   &order=updated_at.desc
-  //   &limit=1
-  String url = String(CONFIG_ENDPOINT_BASE);
-  url += "?select=daily_limit_kwh,limit_enabled";
-  url += "&device_id=eq.";
-  url += DEVICE_ID;
-  url += "&order=updated_at.desc&limit=1";
+        // Fix delta tracking after reset
+        lastTotalEnergy_kWh = ACS712_GetTotalEnergy_kWh();
+    }
 
-  Serial.printf("GET %s\n", url.c_str());
+    // ----------- Daily limit enforcement -----------
+    if (g_limitEnabled && totalGridKwh >= g_dailyLimitKwh) {
+        CurrentSource = 1; // Switch to Solar
+    } else {
+        CurrentSource = 0; // Use Grid
+    }
 
-  if (!http.begin(client, url)) {
-    Serial.println("HTTP begin() failed (device_config)");
-    printTlsLastError(client);
-    return false;
-  }
+    // ----------- SSR control -----------
+    digitalWrite(SSR_Pin, CurrentSource ? LOW : HIGH);
 
-  http.addHeader("apikey", SUPABASE_ANON_KEY);
-  http.addHeader("Authorization", String("Bearer ") + SUPABASE_ANON_KEY);
+ 
 
-  int code = http.GET();
-  String resp = http.getString();
+    // ----------- Update OLED display -----------
+    u8g2.clearBuffer();
+    u8g2.setFontPosTop();
+    u8g2.setFont(u8g2_font_profont12_mr);
+    char buffer[32];
 
-  Serial.printf("HTTP %d (device_config): %s\n", code, resp.c_str());
+    sprintf(buffer, "Daily Limit: %.2f kWh", g_dailyLimitKwh);
+    u8g2.drawStr(0, 0, buffer);
 
-  if (code <= 0) {
-    Serial.printf("HTTP error (device_config): %s\n",
-                  http.errorToString(code).c_str());
-    printTlsLastError(client);
-    http.end();
-    client.stop();
-    return false;
-  }
+    sprintf(buffer, "Source: %s", CurrentSource ? "Solar" : "Grid");
+    u8g2.drawStr(0, 16, buffer);
 
-  if (code < 200 || code >= 300) {
-    Serial.println("Non-2xx response when fetching device_config");
-    http.end();
-    client.stop();
-    return false;
-  }
+    sprintf(buffer, "Consumption: %.3f kWh", CurrentUsageW);
+    u8g2.drawStr(0, 32, buffer);
 
-  // Supabase returns an array: [ { ... } ]
-  StaticJsonDocument<512> doc;
-  DeserializationError err = deserializeJson(doc, resp);
-  if (err) {
-    Serial.print("JSON parse error (device_config): ");
-    Serial.println(err.c_str());
-    http.end();
-    client.stop();
-    return false;
-  }
+    sprintf(buffer, "Usage: %.2f W", CurrentUsageA * 230);
+    u8g2.drawStr(0, 48, buffer);
 
-  if (!doc.is<JsonArray>() || doc.size() == 0) {
-    Serial.println("No device_config row found for this device_id.");
-    http.end();
-    client.stop();
-    return false;
-  }
+    sprintf(buffer, "WiFi: %s", (WiFi.status() == WL_CONNECTED) ? "Connected" : "Disconnected");
+    u8g2.drawStr(0, 64, buffer);
 
-  JsonObject cfg = doc[0];
+    u8g2.sendBuffer();
 
-  if (cfg.containsKey("daily_limit_kwh")) {
-    g_dailyLimitKwh = cfg["daily_limit_kwh"].as<float>();
-  }
-  if (cfg.containsKey("limit_enabled")) {
-    g_limitEnabled = cfg["limit_enabled"].as<bool>();
-  }
-
-  g_hasConfig = true;
-
-  Serial.printf(
-    "Config loaded: limit_enabled=%s, daily_limit_kwh=%.2f kWh\n",
-    g_limitEnabled ? "true" : "false",
-    g_dailyLimitKwh);
-
-  http.end();
-  client.stop();
-  return true;
-}
-
-
-/* ====== TLS DEBUG (optional) ====== */
-void printTlsLastError(WiFiClientSecure& client) {
-  char buf[128];
-  int err = client.lastError(buf, sizeof(buf));
-  if (err) {
-    Serial.printf("TLS lastError(%d): %s\n", err, buf);
-  } else {
-    Serial.println("TLS lastError: (none reported)");
-  }
+ 
 }

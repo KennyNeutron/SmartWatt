@@ -1,4 +1,4 @@
-
+#include "Supabase_Functions.h"
 bool Display_WiFi_Initialized = false;
 bool Reconnecting_WiFi = false;
 bool WiFi_Connected_FirstTime = false;

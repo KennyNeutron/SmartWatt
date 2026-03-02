@@ -4,8 +4,8 @@
 #include <Arduino.h>
 
 /* ====== WIFI CONFIG ====== */
-const char* WIFI_SSID     = "KennyNeutron's IPhone";
-const char* WIFI_PASSWORD = "one2nine";
+const char* WIFI_SSID     = "220300";
+const char* WIFI_PASSWORD = "20001998";
 
 /* ====== SUPABASE CONFIG (SMARTWATT) ====== */
 // REST endpoint for device_readings
@@ -22,7 +22,10 @@ const char* SUPABASE_ANON_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlYXllbnR3cm5tYXRuc2Rwb2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjExMDI4MjAsImV4cCI6MjA3NjY3ODgyMH0.0kIWd35tsnBtt1XYr_3jIGnRE0PmY8k77hu8r09hxMk";
 
 // SmartWatt device_id (from public.devices)
-const char* DEVICE_ID = "4f66ac59-eb16-48aa-84a2-c2fad166ef4e";
+const char* DEVICE_ID = "8f05d9af-71ad-4b4b-a927-9fd9bc6fd337";
+
+//Kristine: 8f05d9af-71ad-4b4b-a927-9fd9bc6fd337
+//JB: 4f66ac59-eb16-48aa-84a2-c2fad166ef4e
 
 /* ====== TIMING ====== */
 // Philippines is UTC+8, no DST
@@ -93,7 +96,6 @@ float CurrentUsageA = 0.0;
 
 float totalGridKwh = 0.0;
 float totalSolarKwh = 0.0;
-int g_lastResetDay = -1;  // Tracks the last day (1-31) a reset occurred
 
 
 #endif
