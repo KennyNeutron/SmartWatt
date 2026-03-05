@@ -19,7 +19,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   // Set this to true to enable the 404 error page and block all other pages
-  const ENABLE_404_MODE = true;
+  const ENABLE_404_MODE = false;
 
   return (
     <html lang="en" className="dark">
