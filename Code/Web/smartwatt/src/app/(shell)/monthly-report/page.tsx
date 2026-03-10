@@ -126,12 +126,16 @@ export default function MonthlyReportPage() {
           }
         }
 
-        // All readings for this device
-        const { data: readings, error: readingsError } = await supabase
+        // All readings for this device (fetch latest first to avoid being cut off by 1000-row REST API limit)
+        const { data: readingsData, error: readingsError } = await supabase
           .from("device_readings")
           .select("grid_kwh, solar_kwh, recorded_at")
           .eq("device_id", deviceId)
-          .order("recorded_at", { ascending: true });
+          .order("recorded_at", { ascending: false })
+          .limit(5000);
+
+        const readings = readingsData ? [...readingsData].reverse() : [];
+        console.log(`[MonthlyReport] Fetched ${readings.length} readings.`);
 
         if (readingsError) {
           console.error(
@@ -178,8 +182,8 @@ export default function MonthlyReportPage() {
 
         // Max possible power (kW) to filter out glitches.
         // e.g. if delta is 10kWh in 1 minute, that's 600kW -> impossible for this device.
-        // 20kW is a safe upper bound for a home sensor (ACS712 30A @ 230V ~ 7kW).
-        const MAX_POWER_KW = 10.0;
+        // 50kW is a safe upper bound for a home sensor (allows for initial surges or high-power startup).
+        const MAX_POWER_KW = 50.0;
 
         for (const row of readings as {
           grid_kwh: number | null;
