@@ -211,7 +211,7 @@ export default async function DashboardPage() {
             </div>
 
             <p className="text-3xl font-semibold">
-              {gridUsageKwh.toFixed(1)}{" "}
+              {gridUsageKwh.toFixed(3)}{" "}
               <span className="text-base font-normal text-smart-muted">
                 kWh
               </span>
@@ -253,7 +253,7 @@ export default async function DashboardPage() {
             </div>
 
             <p className="text-3xl font-semibold">
-              {solarUsageKwh.toFixed(1)}{" "}
+              {solarUsageKwh.toFixed(3)}{" "}
               <span className="text-base font-normal text-smart-muted">
                 kWh
               </span>

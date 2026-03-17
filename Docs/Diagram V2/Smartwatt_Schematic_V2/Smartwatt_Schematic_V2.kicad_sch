@@ -2551,6 +2551,19 @@
 		)
 		(uuid "738ca05e-aaab-45bb-b8e8-3a3c19bcd923")
 	)
+	(text "BATTERY"
+		(exclude_from_sim no)
+		(at 201.168 80.264 0)
+		(effects
+			(font
+				(size 1.905 1.905)
+				(thickness 0.508)
+				(bold yes)
+			)
+			(justify left)
+		)
+		(uuid "82c86e4b-18e6-4888-8e2d-a2524bbf2ee6")
+	)
 	(text "ACS2_1"
 		(exclude_from_sim no)
 		(at 103.886 104.394 0)
@@ -2630,12 +2643,12 @@
 		)
 		(uuid "abe6cfaa-b1cc-4f03-9fba-57a4d7b01082")
 	)
-	(text "BMS"
+	(text "Charge\nController"
 		(exclude_from_sim no)
 		(at 167.64 81.28 0)
 		(effects
 			(font
-				(size 5.08 5.08)
+				(size 1.778 1.778)
 				(thickness 1.524)
 				(bold yes)
 			)
@@ -2755,12 +2768,6 @@
 		(uuid "2cdb9b5a-7cec-40aa-96cc-c52f35c08674")
 	)
 	(junction
-		(at 209.55 100.33)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "8eacc097-7e52-4ed3-8f41-2e32e6728a17")
-	)
-	(junction
 		(at 247.65 121.92)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -2777,12 +2784,6 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "cc2f72d9-8224-419f-9337-96b6c9c2b744")
-	)
-	(junction
-		(at 209.55 83.82)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "d6dfb5d3-b893-46b8-80cc-613cee8cc515")
 	)
 	(wire
 		(pts
@@ -2866,13 +2867,13 @@
 	)
 	(wire
 		(pts
-			(xy 209.55 96.52) (xy 209.55 100.33)
+			(xy 181.61 81.28) (xy 189.23 81.28)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "10eb9aa3-f957-4640-bb55-112177e9c3bc")
+		(uuid "16b913c9-101f-4c1a-822c-0777ecc1264d")
 	)
 	(wire
 		(pts
@@ -2886,6 +2887,16 @@
 	)
 	(wire
 		(pts
+			(xy 189.23 71.12) (xy 198.12 71.12)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "1b27a0fd-0a9b-4f44-9395-04a9adddf6a1")
+	)
+	(wire
+		(pts
 			(xy 144.78 76.2) (xy 152.4 76.2)
 		)
 		(stroke
@@ -2896,13 +2907,13 @@
 	)
 	(wire
 		(pts
-			(xy 196.85 83.82) (xy 209.55 83.82)
+			(xy 198.12 90.17) (xy 198.12 85.09)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "21fc70b8-b75f-4147-a10b-83dca78e66cd")
+		(uuid "2428c276-e2e0-4c7e-9100-15e20177ecd6")
 	)
 	(wire
 		(pts
@@ -2913,6 +2924,16 @@
 			(type default)
 		)
 		(uuid "25fa22b2-9c8f-4f11-937a-3f662e8ec7b4")
+	)
+	(wire
+		(pts
+			(xy 189.23 78.74) (xy 189.23 71.12)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "2e25aa98-3fa4-48c5-8306-24ef5bff84a6")
 	)
 	(wire
 		(pts
@@ -2936,13 +2957,13 @@
 	)
 	(wire
 		(pts
-			(xy 191.77 66.04) (xy 209.55 66.04)
+			(xy 198.12 71.12) (xy 198.12 74.93)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "3548cad9-2db3-42a9-a4aa-632981f7acea")
+		(uuid "34b81307-e2dc-403a-8a56-24f47f3d3c8c")
 	)
 	(wire
 		(pts
@@ -2996,16 +3017,6 @@
 	)
 	(wire
 		(pts
-			(xy 189.23 118.11) (xy 209.55 118.11)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "4501af0e-8b76-423b-912e-2a622c163c35")
-	)
-	(wire
-		(pts
 			(xy 273.05 104.14) (xy 217.17 104.14)
 		)
 		(stroke
@@ -3036,16 +3047,6 @@
 	)
 	(wire
 		(pts
-			(xy 191.77 76.2) (xy 191.77 66.04)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "476d4657-4d3b-42de-b025-be96039a5efb")
-	)
-	(wire
-		(pts
 			(xy 354.33 116.84) (xy 339.09 116.84)
 		)
 		(stroke
@@ -3063,26 +3064,6 @@
 			(type default)
 		)
 		(uuid "4a76ecd4-663f-4dc1-90fe-69a3d5b40613")
-	)
-	(wire
-		(pts
-			(xy 191.77 100.33) (xy 209.55 100.33)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "4cf9b45b-d808-41fb-a00d-5ebe279f0dfe")
-	)
-	(wire
-		(pts
-			(xy 209.55 118.11) (xy 209.55 113.03)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "4e64adc3-441a-44c6-8ca1-5959906c3950")
 	)
 	(wire
 		(pts
@@ -3156,16 +3137,6 @@
 	)
 	(wire
 		(pts
-			(xy 209.55 83.82) (xy 209.55 86.36)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "5f7a7d4b-eefe-490d-a842-d323f20c4d41")
-	)
-	(wire
-		(pts
 			(xy 237.49 69.85) (xy 308.61 69.85)
 		)
 		(stroke
@@ -3173,26 +3144,6 @@
 			(type default)
 		)
 		(uuid "681d0655-0802-4dbe-bf08-bc1266d9cddf")
-	)
-	(wire
-		(pts
-			(xy 189.23 83.82) (xy 189.23 118.11)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "6dd6e83c-c661-4c23-81da-8a0544ff2f0b")
-	)
-	(wire
-		(pts
-			(xy 209.55 100.33) (xy 209.55 102.87)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "6e0119c9-b79a-49ba-816d-738be2ad94cb")
 	)
 	(wire
 		(pts
@@ -3296,16 +3247,6 @@
 	)
 	(wire
 		(pts
-			(xy 182.88 81.28) (xy 191.77 81.28)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "7dc05d91-86a5-47ee-9d3d-8734657e519d")
-	)
-	(wire
-		(pts
 			(xy 68.58 106.68) (xy 85.09 106.68)
 		)
 		(stroke
@@ -3333,16 +3274,6 @@
 			(type default)
 		)
 		(uuid "81e3eb46-231c-432b-a156-ba49f6e8f7d6")
-	)
-	(wire
-		(pts
-			(xy 191.77 81.28) (xy 191.77 100.33)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "85e2b613-cace-4004-93a1-f96d743475d4")
 	)
 	(wire
 		(pts
@@ -3376,6 +3307,16 @@
 	)
 	(wire
 		(pts
+			(xy 189.23 90.17) (xy 198.12 90.17)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "8f58636e-d534-4b3f-a6fc-a36af038e429")
+	)
+	(wire
+		(pts
 			(xy 85.09 215.9) (xy 102.87 215.9)
 		)
 		(stroke
@@ -3386,13 +3327,13 @@
 	)
 	(wire
 		(pts
-			(xy 182.88 76.2) (xy 191.77 76.2)
+			(xy 189.23 81.28) (xy 189.23 90.17)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "91e5bea0-4d42-48e2-89ad-bd75ce33eef5")
+		(uuid "92e79a1a-57bc-453a-bb11-dde4c6928a6a")
 	)
 	(wire
 		(pts
@@ -3496,16 +3437,6 @@
 	)
 	(wire
 		(pts
-			(xy 209.55 80.01) (xy 209.55 83.82)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "c162f0a6-5ae0-442b-8dff-99814111df44")
-	)
-	(wire
-		(pts
 			(xy 223.52 121.92) (xy 247.65 121.92)
 		)
 		(stroke
@@ -3543,16 +3474,6 @@
 			(type default)
 		)
 		(uuid "c8956841-07c2-44b4-93c2-fe6cb9b38660")
-	)
-	(wire
-		(pts
-			(xy 182.88 83.82) (xy 189.23 83.82)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "cd297cc4-525a-4036-b53f-352cc86f0a64")
 	)
 	(wire
 		(pts
@@ -3596,6 +3517,16 @@
 	)
 	(wire
 		(pts
+			(xy 181.61 78.74) (xy 189.23 78.74)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "db69f99b-2496-48b9-ab70-5ce4cc75a57f")
+	)
+	(wire
+		(pts
 			(xy 125.73 113.03) (xy 132.08 113.03)
 		)
 		(stroke
@@ -3616,16 +3547,6 @@
 	)
 	(wire
 		(pts
-			(xy 182.88 78.74) (xy 196.85 78.74)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "e25898a2-d0c9-4cbf-a7b4-4dc8ee3c277b")
-	)
-	(wire
-		(pts
 			(xy 382.27 166.37) (xy 306.07 166.37)
 		)
 		(stroke
@@ -3643,16 +3564,6 @@
 			(type default)
 		)
 		(uuid "ec73e262-a888-4e15-b278-48436e3269b2")
-	)
-	(wire
-		(pts
-			(xy 209.55 66.04) (xy 209.55 69.85)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "ee37b4cb-d92b-48e0-ad06-6d2900a4194b")
 	)
 	(wire
 		(pts
@@ -3733,16 +3644,6 @@
 			(type default)
 		)
 		(uuid "fb393b5c-3263-4b5a-8a84-aee30d352c4b")
-	)
-	(wire
-		(pts
-			(xy 196.85 78.74) (xy 196.85 83.82)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "fccb6417-f096-465c-860f-02b4485da9b9")
 	)
 	(symbol
 		(lib_id "power:GND")
@@ -3946,36 +3847,37 @@
 		)
 	)
 	(symbol
-		(lib_id "Device:Battery")
-		(at 209.55 107.95 0)
+		(lib_id "Connector:Screw_Terminal_01x02")
+		(at 176.53 78.74 0)
 		(mirror y)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
 		(on_board yes)
 		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "1a27eaf1-7eff-45d7-aea6-b8c43af293c8")
-		(property "Reference" "BT3"
-			(at 205.74 106.1084 0)
+		(uuid "1cb8ff08-bcef-42d3-811c-210b071e0813")
+		(property "Reference" "J14"
+			(at 173.99 78.7399 0)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
 				(justify left)
+				(hide yes)
 			)
 		)
-		(property "Value" "Battery"
-			(at 205.74 108.6484 0)
+		(property "Value" "Power Input"
+			(at 173.99 81.2799 0)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
 				(justify left)
+				(hide yes)
 			)
 		)
 		(property "Footprint" ""
-			(at 209.55 106.426 90)
+			(at 176.53 78.74 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3984,7 +3886,7 @@
 			)
 		)
 		(property "Datasheet" "~"
-			(at 209.55 106.426 90)
+			(at 176.53 78.74 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3992,25 +3894,25 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "Multiple-cell battery"
-			(at 209.55 107.95 0)
+		(property "Description" "Generic screw terminal, single row, 01x02, script generated (kicad-library-utils/schlib/autogen/connector/)"
+			(at 176.53 78.74 0)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
 				(hide yes)
 			)
-		)
-		(pin "2"
-			(uuid "4ea0a8c9-ba4b-4660-8aa7-3043c59e98e4")
 		)
 		(pin "1"
-			(uuid "9b1f4e1d-de65-41fa-9753-7bed137d59dd")
+			(uuid "6dd8354c-b634-4d7f-987b-2d3031629a53")
+		)
+		(pin "2"
+			(uuid "282652f7-4eb2-4513-ab52-11755254b1bd")
 		)
 		(instances
 			(project "Smartwatt_Schematic_V2"
 				(path "/4379821e-3c6b-4fd7-a2b9-ce3c09962035"
-					(reference "BT3")
+					(reference "J14")
 					(unit 1)
 				)
 			)
@@ -4821,7 +4723,7 @@
 	)
 	(symbol
 		(lib_id "Device:Battery")
-		(at 209.55 74.93 0)
+		(at 198.12 80.01 0)
 		(mirror y)
 		(unit 1)
 		(exclude_from_sim no)
@@ -4831,25 +4733,27 @@
 		(fields_autoplaced yes)
 		(uuid "96022910-02bf-4d54-afea-4a2fea500e2b")
 		(property "Reference" "BT1"
-			(at 205.74 73.0884 0)
+			(at 194.31 78.1684 0)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
 				(justify left)
+				(hide yes)
 			)
 		)
 		(property "Value" "Battery"
-			(at 205.74 75.6284 0)
+			(at 194.31 80.7084 0)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
 				(justify left)
+				(hide yes)
 			)
 		)
 		(property "Footprint" ""
-			(at 209.55 73.406 90)
+			(at 198.12 78.486 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4858,7 +4762,7 @@
 			)
 		)
 		(property "Datasheet" "~"
-			(at 209.55 73.406 90)
+			(at 198.12 78.486 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4867,7 +4771,7 @@
 			)
 		)
 		(property "Description" "Multiple-cell battery"
-			(at 209.55 74.93 0)
+			(at 198.12 80.01 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -5105,77 +5009,6 @@
 		)
 	)
 	(symbol
-		(lib_id "Device:Battery")
-		(at 209.55 91.44 0)
-		(mirror y)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "b42d4da4-05d7-4e2b-b13d-3b432f2270de")
-		(property "Reference" "BT2"
-			(at 205.74 89.5984 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Value" "Battery"
-			(at 205.74 92.1384 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" ""
-			(at 209.55 89.916 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" "~"
-			(at 209.55 89.916 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" "Multiple-cell battery"
-			(at 209.55 91.44 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "2"
-			(uuid "242fe1ce-7ffe-4f73-9a51-6466e5ba322a")
-		)
-		(pin "1"
-			(uuid "c228ac0e-f74b-442c-b578-f8ee1455eac1")
-		)
-		(instances
-			(project "Smartwatt_Schematic_V2"
-				(path "/4379821e-3c6b-4fd7-a2b9-ce3c09962035"
-					(reference "BT2")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
 		(lib_id "Connector:Screw_Terminal_01x02")
 		(at 102.87 115.57 270)
 		(mirror x)
@@ -5242,85 +5075,6 @@
 			(project "Smartwatt_Schematic_V2"
 				(path "/4379821e-3c6b-4fd7-a2b9-ce3c09962035"
 					(reference "J10")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Connector:Screw_Terminal_01x04")
-		(at 177.8 78.74 0)
-		(mirror y)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "be49af9b-14c6-4bf9-b804-d70d74e499b6")
-		(property "Reference" "J5"
-			(at 175.26 78.7399 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-				(hide yes)
-			)
-		)
-		(property "Value" "Water Level"
-			(at 175.26 81.2799 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-				(hide yes)
-			)
-		)
-		(property "Footprint" ""
-			(at 177.8 78.74 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" "~"
-			(at 177.8 78.74 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" "Generic screw terminal, single row, 01x04, script generated (kicad-library-utils/schlib/autogen/connector/)"
-			(at 177.8 78.74 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "1"
-			(uuid "862d8e66-e7d1-437e-8571-253e3094b539")
-		)
-		(pin "4"
-			(uuid "2db6f642-62d8-4bdb-a9c3-34856d71d99c")
-		)
-		(pin "3"
-			(uuid "b8c13ea4-7d30-4d8b-bc10-80d9a7f805a5")
-		)
-		(pin "2"
-			(uuid "ae96fd6d-0107-47c2-81e0-ce3a403b1f22")
-		)
-		(instances
-			(project "Smartwatt_Schematic_V2"
-				(path "/4379821e-3c6b-4fd7-a2b9-ce3c09962035"
-					(reference "J5")
 					(unit 1)
 				)
 			)

@@ -236,7 +236,7 @@ export default function MonthlyReportPage() {
               } else {
                 // Glitch detected (huge jump), ignore this delta
                 console.warn(
-                  `Ignored grid glitch: ${rawDeltaGrid.toFixed(2)} kWh in ${timeDiffHours.toFixed(4)} h (${impliedGridKw.toFixed(1)} kW)`,
+                  `Ignored grid glitch: ${rawDeltaGrid.toFixed(3)} kWh in ${timeDiffHours.toFixed(4)} h (${impliedGridKw.toFixed(1)} kW)`,
                 );
                 deltaGrid = 0;
               }
@@ -245,7 +245,7 @@ export default function MonthlyReportPage() {
                 deltaSolar = rawDeltaSolar;
               } else {
                 console.warn(
-                  `Ignored solar glitch: ${rawDeltaSolar.toFixed(2)} kWh in ${timeDiffHours.toFixed(4)} h (${impliedSolarKw.toFixed(1)} kW)`,
+                  `Ignored solar glitch: ${rawDeltaSolar.toFixed(3)} kWh in ${timeDiffHours.toFixed(4)} h (${impliedSolarKw.toFixed(1)} kW)`,
                 );
                 deltaSolar = 0;
               }
@@ -436,10 +436,10 @@ export default function MonthlyReportPage() {
         <SummaryCard
           icon={<IconKwh />}
           title="Total consumption"
-          value={summary ? `${summary.totalKwh.toFixed(1)} kWh` : "0.0 kWh"}
+          value={summary ? `${summary.totalKwh.toFixed(3)} kWh` : "0.000 kWh"}
           hint={
             summary
-              ? `${summary.averageDailyKwh.toFixed(1)} kWh per day on average`
+              ? `${summary.averageDailyKwh.toFixed(3)} kWh per day on average`
               : "No data for this month yet."
           }
         />
@@ -450,7 +450,7 @@ export default function MonthlyReportPage() {
           hint={
             summary
               ? `${(summary.totalKwh * (summary.gridPercent / 100)).toFixed(
-                  1,
+                  3,
                 )} kWh from grid`
               : "No grid data for this month."
           }
@@ -462,7 +462,7 @@ export default function MonthlyReportPage() {
           hint={
             summary
               ? `${(summary.totalKwh * (summary.solarPercent / 100)).toFixed(
-                  1,
+                  3,
                 )} kWh from solar`
               : "No solar data for this month."
           }
@@ -580,13 +580,13 @@ export default function MonthlyReportPage() {
                           {day.dateLabel}
                         </td>
                         <td className="py-2 pr-4 text-xs text-smart-fg">
-                          {day.gridKwh.toFixed(1)}
+                          {day.gridKwh.toFixed(3)}
                         </td>
                         <td className="py-2 pr-4 text-xs text-smart-fg">
-                          {day.solarKwh.toFixed(1)}
+                          {day.solarKwh.toFixed(3)}
                         </td>
                         <td className="py-2 pr-4 text-xs text-smart-fg">
-                          {total.toFixed(1)}
+                          {total.toFixed(3)}
                         </td>
                         <td className="py-2 pr-4 text-xs">
                           {day.overLimit ? (
@@ -706,12 +706,12 @@ function ExportButtons({ summary, days }: ExportButtonsProps) {
       "Status",
     ];
     const rows = days.map((day) => {
-      const total = (day.gridKwh + day.solarKwh).toFixed(1);
+      const total = (day.gridKwh + day.solarKwh).toFixed(3);
       const status = day.overLimit ? "Over Limit" : "Within Limit";
       return [
         day.dateISO,
-        day.gridKwh.toFixed(1),
-        day.solarKwh.toFixed(1),
+        day.gridKwh.toFixed(3),
+        day.solarKwh.toFixed(3),
         total,
         status,
       ];
@@ -757,14 +757,14 @@ function ExportButtons({ summary, days }: ExportButtonsProps) {
       doc.text("Summary", 14, 40);
 
       doc.setFontSize(10);
-      doc.text(`Total Consumption: ${summary.totalKwh.toFixed(1)} kWh`, 14, 48);
+      doc.text(`Total Consumption: ${summary.totalKwh.toFixed(3)} kWh`, 14, 48);
       doc.text(
-        `Grid Contribution: ${summary.gridPercent}% (${(summary.totalKwh * (summary.gridPercent / 100)).toFixed(1)} kWh)`,
+        `Grid Contribution: ${summary.gridPercent}% (${(summary.totalKwh * (summary.gridPercent / 100)).toFixed(3)} kWh)`,
         14,
         54,
       );
       doc.text(
-        `Solar Contribution: ${summary.solarPercent}% (${(summary.totalKwh * (summary.solarPercent / 100)).toFixed(1)} kWh)`,
+        `Solar Contribution: ${summary.solarPercent}% (${(summary.totalKwh * (summary.solarPercent / 100)).toFixed(3)} kWh)`,
         14,
         60,
       );
@@ -784,11 +784,11 @@ function ExportButtons({ summary, days }: ExportButtonsProps) {
         "Status",
       ];
       const tableRows = days.map((day) => {
-        const total = (day.gridKwh + day.solarKwh).toFixed(1);
+        const total = (day.gridKwh + day.solarKwh).toFixed(3);
         return [
           day.dateLabel,
-          day.gridKwh.toFixed(1),
-          day.solarKwh.toFixed(1),
+          day.gridKwh.toFixed(3),
+          day.solarKwh.toFixed(3),
           total,
           day.overLimit ? "Over Limit" : "OK",
         ];
